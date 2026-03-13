@@ -8,7 +8,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<AuthPage />} />
         {/* Redirect root to login for now */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/home" element={<HomePage />} />
 
         {/* Placeholder for future dashboard */}
