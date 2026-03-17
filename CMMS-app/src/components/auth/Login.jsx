@@ -84,11 +84,7 @@ export default function Login({ setView, initialRole = 'student' }) {
                     />
                 </div>
 
-                <div className="flex justify-between items-center text-sm px-1">
-                    <label className="flex items-center text-slate-500 gap-2 cursor-pointer hover:text-slate-700">
-                        <input type="checkbox" className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer" />
-                        <span>Remember me</span>
-                    </label>
+                <div className="flex justify-end items-center text-sm px-1">
                     <button
                         type="button"
                         onClick={() => setView('forgot-password')}
