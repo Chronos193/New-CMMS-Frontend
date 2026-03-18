@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
 import FirstPage from './pages/FirstPage';
+import DailyMenu from './pages/DailyMenu';
 
 function App() {
   return (
@@ -9,6 +10,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<AuthPage />} />
         <Route path="/first" element={<FirstPage />} />
+        <Route path="/menu" element={<DailyMenu />} />
         {/* Redirect root to login for now */}
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/home" element={<HomePage />} />
