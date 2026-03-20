@@ -1,37 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import NavBar from '../components/utils/NavBar';
-import { CalendarCheck, Utensils, ReceiptText, Wallet, Loader2 } from 'lucide-react';
+import { CalendarCheck, Utensils, ReceiptText, Wallet, MessageSquarePlus, Loader2 } from 'lucide-react';
 import api from '../Api';
 
 export default function Dashboard() {
     const [profile, setProfile] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [loadingProfile, setLoadingProfile] = useState(true);
-    const [isLoggedIn, setIsLoggedIn] = useState(null);
 
     useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const authRes = await api.get('/api/my/');
-                if (!authRes.data.is_logged_in) {
-                    setIsLoggedIn(false);
-                    setLoadingProfile(false);
-                    return;
-                }
-                setIsLoggedIn(true);
-            } catch (err) {
-                console.error("Auth check failed:", err);
-                setIsLoggedIn(false);
-                setLoadingProfile(false);
-            }
-        };
-        checkAuth();
-    }, []);
-
-    useEffect(() => {
-        if (isLoggedIn === false || isLoggedIn === null) return;
-
         // Fetch real API data
         const fetchDashboardData = async () => {
             try {
@@ -64,33 +42,25 @@ export default function Dashboard() {
         };
 
         fetchDashboardData();
-    }, [isLoggedIn]);
-
+    }, []);
 
     const handleOpenNotifications = async () => {
-        // Find if there are unseen notifications
         const hasUnseen = notifications.some(n => n.category === 'unseen');
         if (!hasUnseen) return;
-
-        // Optimistically update UI so the user sees immediate feedback
         setNotifications(prev => prev.map(n => ({ ...n, category: 'seen' })));
-
         try {
-            // Attempt to inform backend (adjust endpoint if needed based on API docs later)
             await api.post('/api/notifications/mark-seen/');
         } catch (error) {
             console.error('Failed to mark notifications as seen on backend:', error);
         }
     };
 
-    // Placeholder links for NavBar Services dropdown
     const navLinks = [
         { name: "Daily Menu", path: "/menu" },
         { name: "Extra Meals", path: "/page-2" },
         { name: "Leaves & Rebates", path: "/page-3" },
     ];
 
-    // Upgraded Cards Data
     const dashboardCards = [
         {
             title: "Daily Menu",
@@ -124,6 +94,14 @@ export default function Dashboard() {
             color: "from-emerald-500 to-teal-500",
             bgLight: "bg-emerald-50"
         },
+        {
+            title: "Feedbacks",
+            desc: "Submit your feedbacks and complaints.",
+            icon: MessageSquarePlus,
+            link: "/feedbacks",
+            color: "from-cyan-500 to-blue-500",
+            bgLight: "bg-cyan-50"
+        },
     ];
 
     const containerVariants = {
@@ -142,24 +120,6 @@ export default function Dashboard() {
             transition: { type: 'spring', stiffness: 100, damping: 15 },
         },
     };
-
-    if (isLoggedIn === false) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 selection:bg-indigo-100 selection:text-indigo-900">
-                <NavBar profile={null} notifications={[]} navLinks={navLinks} />
-                <main className="flex-grow flex justify-center items-center px-4">
-                    <div className="bg-white/80 backdrop-blur-xl p-10 rounded-3xl shadow-2xl border border-white/50 text-center max-w-md w-full relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-                        <h2 className="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">Access Denied</h2>
-                        <p className="text-slate-500 mb-8 font-medium leading-relaxed">Please sign in to access your personalize dashboard and services.</p>
-                        <a href="/login" className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transform hover:-translate-y-0.5 transition-all duration-300 w-full inline-block">
-                            Go to Login
-                        </a>
-                    </div>
-                </main>
-            </div>
-        );
-    }
 
     return (
     // Matching HomePage theme: bg-slate-50

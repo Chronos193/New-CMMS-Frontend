@@ -4,7 +4,7 @@ import HomePage from './pages/HomePage';
 import FirstPage from './pages/FirstPage';
 import DailyMenu from './pages/DailyMenu';
 import ComplaintPage from "./pages/ComplaintPage";
-import RebatePage from "./pages/RebatePage";
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 
 function App() {
@@ -12,9 +12,25 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<AuthPage />} />
-        <Route path="/first" element={<FirstPage />} />
-        <Route path="/menu" element={<DailyMenu />} />
-        {/* Redirect root to login for now */}
+        
+        {/* Protected Routes */}
+        <Route path="/first" element={
+          <ProtectedRoute>
+            <FirstPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/menu" element={
+          <ProtectedRoute>
+            <DailyMenu />
+          </ProtectedRoute>
+        } />
+        <Route path="/feedbacks" element={
+          <ProtectedRoute>
+            <ComplaintPage />
+          </ProtectedRoute>
+        } />
+
+        {/* Public Routes */}
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/home" element={<HomePage />} />
 
@@ -28,6 +44,10 @@ function App() {
     </Router>
   );
 }
+
+export default App;
+
+
 
 export default App;
 
