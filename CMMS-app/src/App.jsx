@@ -7,6 +7,7 @@ import ComplaintPage from "./pages/ComplaintPage";
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ExtrasPage from './pages/ExtrasPage';
 import RebatePage from './pages/RebatePage';
+import BillingPage from './pages/BillingPage'
 
 
 function App() {
@@ -41,6 +42,12 @@ function App() {
         <Route path='/rebate' element={
           <ProtectedRoute>
             <RebatePage/>
+          </ProtectedRoute>
+        }/>
+
+        <Route path='/billing' element={
+          <ProtectedRoute>
+            <BillingPage/>
           </ProtectedRoute>
         }/>
 

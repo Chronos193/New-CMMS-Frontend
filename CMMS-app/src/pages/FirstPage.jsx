@@ -82,7 +82,7 @@ export default function Dashboard() {
             title: "Rebates",
             desc: "Apply for leaves and manage rebates.",
             icon: ReceiptText,
-            link: "/page-3",
+            link: "/rebate",
             color: "from-rose-500 to-orange-500",
             bgLight: "bg-rose-50"
         },
