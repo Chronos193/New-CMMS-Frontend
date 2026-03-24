@@ -11,7 +11,11 @@ import BillingPage from './pages/BillingPage'
 import CartPage from './pages/CartPage';
 import MyBookings from './pages/MyBookings';
 import { CartProvider } from './components/CartPage/CartContext';
-
+import AdminBillingPage from './pages/AdminBillingPage';
+import AdminExtrasManagement from './pages/AdminExtrasManagement';
+import AdminFeedbackPage from './pages/AdminFeedbackPage';
+import AdminRebatePage from './pages/AdminRebatePage';
+import AdminMenuManagement from './pages/AdminMenuManagement';
 
 function App() {
   return (
@@ -68,6 +72,36 @@ function App() {
             </ProtectedRoute>
           }/>
           
+          <Route path='/admin-billing' element={
+            <ProtectedRoute>
+              <AdminBillingPage/>
+            </ProtectedRoute>
+          }/>
+
+          <Route path='/admin-extra-management' element={
+            <ProtectedRoute>
+              <AdminExtrasManagement/>
+            </ProtectedRoute>
+          }/>
+
+          <Route path='/admin-feedback' element={
+            <ProtectedRoute>
+              <AdminFeedbackPage/>
+            </ProtectedRoute>
+          }/>
+
+
+          <Route path='/admin-rebate' element={
+            <ProtectedRoute>
+              <AdminRebatePage/>
+            </ProtectedRoute>
+          }/>
+
+          <Route path='/admin-menu-management' element={
+            <ProtectedRoute>
+              <AdminMenuManagement/>
+            </ProtectedRoute>
+          }/>
 
           {/* Public Routes */}
           <Route path="/" element={<Navigate to="/home" replace />} />
