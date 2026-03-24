@@ -57,7 +57,7 @@ export default function Dashboard() {
 
     const navLinks = [
         { name: "Daily Menu", path: "/menu" },
-        { name: "Extra Meals", path: "/page-2" },
+        { name: "Extra Meals", path: "/extras" },
         { name: "Leaves & Rebates", path: "/page-3" },
     ];
 
@@ -74,7 +74,7 @@ export default function Dashboard() {
             title: "Extra Meals",
             desc: "Book extra items for upcoming meals.",
             icon: Utensils,
-            link: "/page-2",
+            link: "/extras",
             color: "from-purple-500 to-fuchsia-500",
             bgLight: "bg-purple-50"
         },

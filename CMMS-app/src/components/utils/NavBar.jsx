@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, User, Utensils, LogOut, X, ChevronDown, Phone, Hash, Home, Building, Menu, SquarePen, CalendarClock, Sparkles, Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ShoppingCart, Bell, User, Utensils, LogOut, X, ChevronDown, Phone, Hash, Home, Building, Menu, SquarePen, CalendarClock, Sparkles, Star } from 'lucide-react';
+import { useCart } from '../CartPage/CartContext';
 
 export default function NavBar({ profile, notifications, onOpenNotifications }) {
     const [showProfile, setShowProfile] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
+    const navigate = useNavigate();
+    const { cartCount } = useCart();
 
     const profileRef = useRef(null);
     const notifRef = useRef(null);
@@ -79,6 +83,18 @@ export default function NavBar({ profile, notifications, onOpenNotifications }) 
 
             {/* Right Actions */}
             <div className="flex items-center gap-6 ml-auto">
+                <button
+                    onClick={() => navigate('/cart')}
+                    className="relative p-2.5 rounded-full text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                >
+                    <ShoppingCart className="w-5 h-5" strokeWidth={1.5} />
+                    {cartCount > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+                            {cartCount}
+                        </span>
+                    )}
+                </button>
+
                 {/* Notifications */}
                 <div className="relative flex items-center" ref={notifRef}>
                     <button

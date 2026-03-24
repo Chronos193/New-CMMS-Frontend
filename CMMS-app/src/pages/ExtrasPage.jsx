@@ -5,43 +5,47 @@ import { Utensils, ArrowLeft, CheckCircle2, ShoppingBag, Plus, Loader2 } from 'l
 import { motion, AnimatePresence } from 'framer-motion';
 import NavBar from '../components/utils/NavBar';
 import api from '../Api';
+import { useCart } from '../components/CartPage/CartContext';
 
 const ExtrasPage = () => {
   const navigate = useNavigate();
+  const { cartItems, addToCart, fetchCartSync } = useCart();
   const [selectedHall, setSelectedHall] = useState("");
-  const [showQR, setShowQR] = useState(false);
-  const [bookingDetails, setBookingDetails] = useState(null);
+  const [addingItemId, setAddingItemId] = useState(null);
+
+  useEffect(() => {
+    fetchCartSync();
+  }, []);
 
   // Profile & Notifications state for NavBar
   const [profile, setProfile] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [halls, setHalls] = useState([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // Mock Data with descriptions added to match the reference image
-  const [hallMenus, setHallMenus] = useState({
-    "Hall 1": [
-      { id: 101, name: 'Veg Noodles', price: 40, stockCount: 5, description: "Stir-fried noodles with fresh seasonal vegetables and soy sauce." },
-      { id: 102, name: 'Manchurian', price: 50, stockCount: 10, description: "Crispy vegetable balls tossed in a spicy, tangy Indo-Chinese sauce." },
-    ],
-    "Hall 4": [
-      { id: 401, name: 'Chicken Biryani', price: 120, stockCount: 2, description: "Aromatic basmati rice cooked with tender chicken pieces and traditional spices." },
-      { id: 402, name: 'Paneer Tikka', price: 80, stockCount: 8, description: "Char-grilled cottage cheese cubes marinated in yogurt and spices." },
-    ],
-    "GH1": [
-      { id: 901, name: 'Pasta', price: 70, stockCount: 15, description: "Creamy white sauce pasta with bell peppers and Italian herbs." },
-    ]
-  });
+
+  const [bookings, setBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
 
   useEffect(() => {
     // Fetch real API data for NavBar
     const fetchDashboardData = async () => {
       try {
-        const [profileRes, notifRes] = await Promise.all([
+        const [profileRes, notifRes, hallsRes] = await Promise.all([
           api.get('/api/profile/'),
-          api.get('/api/notifications/')
+          api.get('/api/notifications/'),
+          api.get('/api/halls/')
         ]);
         setProfile(profileRes.data);
         setNotifications(notifRes.data?.results || notifRes.data || []);
+        setHalls(hallsRes.data || []);
+        
+        // If profile has a hall_of_residence, we might want to default the select to it
+        if (profileRes.data?.hall_of_residence) {
+            setSelectedHall(profileRes.data.hall_of_residence);
+        } else if (hallsRes.data?.length > 0) {
+            setSelectedHall(hallsRes.data[0].name || hallsRes.data[0].id);
+        }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         // Fallback for visual testing
@@ -53,12 +57,33 @@ const ExtrasPage = () => {
         setNotifications([
           { id: 1, title: "Meal Confirmed", content: "Friday dinner confirmed.", category: "unseen", time: new Date().toISOString() }
         ]);
+        setHalls([{id: 1, name: 'Hall 1'}, {id: 2, name: 'Hall 2'}, {id: 3, name: 'GH1'}]);
       } finally {
         setLoadingProfile(false);
       }
     };
 
     fetchDashboardData();
+  }, []);
+
+  // Fetch bookings whenever selectedHall changes (or we can just fetch all if hall_id maps nicely)
+  useEffect(() => {
+    const fetchBookings = async () => {
+      setLoadingBookings(true);
+      try {
+        // If we know how to map selectedHall to hall_id, we could append it: `?hall_id=${hallId}`
+        // For now, we'll try fetching without hall_id and rely on the backend's default (user's hall)
+        // Or we pass the selectedHall string if backend expects string. Assuming we just fetch and let backend handle.
+        const res = await api.get('/api/bookings/');
+        setBookings(res.data || []);
+      } catch (err) {
+        console.error("Error fetching bookings:", err);
+        setBookings([]);
+      } finally {
+        setLoadingBookings(false);
+      }
+    };
+    fetchBookings();
   }, []);
 
   const handleOpenNotifications = async () => {
@@ -78,18 +103,42 @@ const ExtrasPage = () => {
     { name: "Leaves & Rebates", path: "/rebate" },
   ];
 
-  const currentMenu = hallMenus[selectedHall] || [];
+  const formatItemDetails = (b) => {
+    const itemId = b.item?.id || b.item_id || b.item;
+    const name = b.item?.name || b.item_name || 'Extra Item';
+    const price = b.item?.cost || b.item_cost || b.cost || b.item?.price || b.item_price || b.price || 0;
+    const stockCount = b.available_count !== undefined ? b.available_count : (b.stockCount || 0);
+    const description = b.item?.description || b.description || "Fresh and hot extra item prepared daily at the mess.";
+    const hallName = b.hall?.name || b.hall_name || b.hall;
+    
+    // format time string e.g. "Tue, 6:00 PM"
+    const timeStr = b.day_and_time ? new Intl.DateTimeFormat('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(b.day_and_time)) : '';
 
-  const handleBooking = (item) => {
-    const token = `IITK-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-    const newMenus = { ...hallMenus };
-    const itemIdx = newMenus[selectedHall].findIndex(i => i.id === item.id);
+    return { ...b, itemId, name, price, stockCount, description, hallName, timeStr, mappedHall: String(hallName) };
+  };
 
-    if (newMenus[selectedHall][itemIdx].stockCount > 0) {
-      newMenus[selectedHall][itemIdx].stockCount -= 1;
-      setHallMenus(newMenus);
-      setBookingDetails({ ...item, token, hall: selectedHall, time: new Date().toLocaleTimeString() });
-      setShowQR(true);
+  const processedBookings = bookings.map(formatItemDetails);
+
+  // If selectedHall is chosen, filter by hall. If not, show all bookings.
+  const currentMenu = processedBookings.filter(b => {
+    if (!selectedHall) return true;
+    const shStr = String(selectedHall).toLowerCase();
+    const bhStr = b.mappedHall.toLowerCase();
+    return bhStr === shStr || bhStr === `hall ${shStr}` || `hall ${bhStr}` === shStr;
+  });
+
+  const handleBooking = async (item) => {
+    if (addingItemId === item.id) return;
+    setAddingItemId(item.id);
+
+    try {
+      // Add to cart safely via CartContext (which handles the API call and sync)
+      await addToCart(item);
+    } catch (err) {
+      console.error("Failed to add to cart on backend:", err);
+      alert("Failed to add to cart");
+    } finally {
+      setAddingItemId(null);
     }
   };
 
@@ -134,10 +183,9 @@ const ExtrasPage = () => {
                       className="w-full appearance-none bg-white border border-slate-200 rounded-xl px-4 py-3 pr-10 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer shadow-sm"
                     >
                       <option value="">Select Hall</option>
-                      {[...Array(13)].map((_, i) => (
-                        <option key={i + 1} value={`Hall ${i + 1}`}>Hall {i + 1}</option>
+                      {halls.map((h, i) => (
+                        <option key={h.id || i} value={h.name || h.id}>{h.name || `Hall ${h.id}`}</option>
                       ))}
-                      <option value="GH1">GH1</option>
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                       <Plus size={16} className="rotate-45" />
@@ -179,51 +227,70 @@ const ExtrasPage = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       whileHover={{ y: -4 }}
-                      className="group bg-white rounded-[1.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+                      className="group bg-white rounded-[1.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col p-6"
                     >
-                      {/* Image Placeholder - Reduced Height */}
-                      <div className="relative h-40 bg-slate-100/50 flex items-center justify-center overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <Utensils className="w-12 h-12 text-slate-200 group-hover:scale-110 transition-transform duration-500" strokeWidth={1} />
-
-                        {/* Available Badge */}
-                        {item.stockCount > 0 && (
-                          <div className="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-sm text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1.25 rounded-md shadow-lg">
-                            Available
-                          </div>
-                        )}
-                        {item.stockCount === 0 && (
-                          <div className="absolute top-3 right-3 bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1.25 rounded-md shadow-lg">
-                            Sold Out
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Card Content - Reduced Padding */}
-                      <div className="p-5 flex flex-col flex-grow">
-                        <div className="flex justify-between items-baseline mb-1.5">
-                          <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors truncate pr-2">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex flex-col gap-1.5 pr-4">
+                          <h3 className="text-xl font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
                             {item.name}
                           </h3>
-                          <span className="text-base font-bold text-slate-900 shrink-0">₹{item.price}</span>
+                          {item.timeStr && (
+                            <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
+                              {item.timeStr} &bull; {item.mappedHall}
+                            </span>
+                          )}
                         </div>
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <span className="text-2xl font-black text-slate-900">₹{item.price}</span>
+                          {/* Available Badge */}
+                          {item.stockCount > 0 ? (
+                            <div className="bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">
+                              Avail: {item.stockCount}
+                            </div>
+                          ) : (
+                            <div className="bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">
+                              Sold Out
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-                        <p className="text-slate-500 text-xs leading-relaxed mb-6 flex-grow line-clamp-2">
-                          {item.description || "Fresh and hot extra item prepared daily at the mess."}
-                        </p>
+                      <p className="text-slate-500 text-sm leading-relaxed mb-6 flex-grow">
+                        {item.description || "Fresh and hot extra item prepared daily at the mess."}
+                      </p>
 
+                    {(() => {
+                      const currentCartItem = cartItems.find(ci => ci.itemId === item.itemId);
+                      const quantityInCart = currentCartItem ? currentCartItem.quantity : 0;
+                      const isMaxReached = quantityInCart >= item.stockCount;
+
+                      return (
                         <button
                           onClick={() => handleBooking(item)}
-                          disabled={item.stockCount === 0}
-                          className={`group/btn w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] ${item.stockCount > 0
+                          disabled={item.stockCount === 0 || addingItemId === item.id || isMaxReached}
+                          className={`group/btn w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] ${
+                              item.stockCount > 0 && addingItemId !== item.id && !isMaxReached
                               ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-200'
                               : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                             }`}
                         >
-                          {item.stockCount > 0 && <Plus size={16} className="group-hover/btn:rotate-90 transition-transform" />}
-                          <span>{item.stockCount > 0 ? 'Add to Order' : 'Out of Stock'}</span>
+                          {addingItemId === item.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            item.stockCount > 0 && !isMaxReached && <Plus size={16} className="group-hover/btn:rotate-90 transition-transform" />
+                          )}
+                          <span>
+                            {addingItemId === item.id 
+                              ? 'Adding...' 
+                              : item.stockCount === 0 
+                                ? 'Out of Stock' 
+                                : isMaxReached 
+                                  ? 'Max Reached' 
+                                  : 'Add to Order'}
+                          </span>
                         </button>
-                      </div>
+                      );
+                    })()}
                     </motion.div>
                   ))}
                 </motion.div>
@@ -243,62 +310,6 @@ const ExtrasPage = () => {
           </>
         )}
       </main>
-
-      {/* QR MODAL (Refined for the new theme) */}
-      <AnimatePresence>
-        {showQR && bookingDetails && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowQR(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative bg-white p-8 rounded-[2rem] max-w-sm w-full shadow-2xl overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-purple-500" />
-
-              <div className="flex flex-col items-center text-center">
-                <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6">
-                  <CheckCircle2 size={28} className="text-emerald-500" />
-                </div>
-
-                <h2 className="text-2xl font-bold text-slate-900 mb-1">Booking Confirmed!</h2>
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-8">
-                  Present this QR at {bookingDetails.hall} counters
-                </p>
-
-                <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100 shadow-inner mb-8 transition-all hover:scale-[1.02]">
-                  <QRCodeSVG value={bookingDetails.token} size={180} />
-                </div>
-
-                <div className="w-full bg-slate-50 border border-slate-100 p-5 rounded-2xl text-left mb-8">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Item</span>
-                    <span className="font-bold text-slate-800">{bookingDetails.name}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Amount</span>
-                    <span className="text-lg font-black text-indigo-600">₹{bookingDetails.price}</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setShowQR(false)}
-                  className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-xl active:scale-95"
-                >
-                  Close & Done
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

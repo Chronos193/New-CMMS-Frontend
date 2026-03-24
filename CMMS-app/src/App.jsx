@@ -8,60 +8,79 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import ExtrasPage from './pages/ExtrasPage';
 import RebatePage from './pages/RebatePage';
 import BillingPage from './pages/BillingPage'
+import CartPage from './pages/CartPage';
+import MyBookings from './pages/MyBookings';
+import { CartProvider } from './components/CartPage/CartContext';
 
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/login" element={<AuthPage />} />
-        
-        {/* Protected Routes */}
-        <Route path="/first" element={
-          <ProtectedRoute>
-            <FirstPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/menu" element={
-          <ProtectedRoute>
-            <DailyMenu />
-          </ProtectedRoute>
-        } />
-        <Route path="/feedbacks" element={
-          <ProtectedRoute>
-            <ComplaintPage />
-          </ProtectedRoute>
-        } />
+      <CartProvider>
+        <Routes>
+          <Route path="/login" element={<AuthPage />} />
+          
+          {/* Protected Routes */}
+          <Route path="/first" element={
+            <ProtectedRoute>
+              <FirstPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/menu" element={
+            <ProtectedRoute>
+              <DailyMenu />
+            </ProtectedRoute>
+          } />
+          <Route path="/feedbacks" element={
+            <ProtectedRoute>
+              <ComplaintPage />
+            </ProtectedRoute>
+          } />
 
-        <Route path='/extras' element={
-          <ProtectedRoute>
-            <ExtrasPage/>
-          </ProtectedRoute>
-        }/>
+          <Route path='/extras' element={
+            <ProtectedRoute>
+              <ExtrasPage/>
+            </ProtectedRoute>
+          }/>
 
-        <Route path='/rebate' element={
-          <ProtectedRoute>
-            <RebatePage/>
-          </ProtectedRoute>
-        }/>
+          <Route path='/rebate' element={
+            <ProtectedRoute>
+              <RebatePage/>
+            </ProtectedRoute>
+          }/>
 
-        <Route path='/billing' element={
-          <ProtectedRoute>
-            <BillingPage/>
-          </ProtectedRoute>
-        }/>
+          <Route path='/billing' element={
+            <ProtectedRoute>
+              <BillingPage/>
+            </ProtectedRoute>
+          }/>
 
-        {/* Public Routes */}
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="/home" element={<HomePage />} />
+          
+          <Route path='/cart' element={
+            <ProtectedRoute>
+              <CartPage/>
+            </ProtectedRoute>
+          }/>
 
-        {/* Placeholder for future dashboard */}
-        <Route path="/dashboard" element={
-          <div className='flex justify-center items-center h-screen bg-gray-900 text-white'>
-            <h1 className='text-3xl font-bold'>Welcome to Dashboard!</h1>
-          </div>
-        } />
-      </Routes>
+          <Route path='/my-bookings' element={
+            <ProtectedRoute>
+              <MyBookings/>
+            </ProtectedRoute>
+          }/>
+          
+
+          {/* Public Routes */}
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/home" element={<HomePage />} />
+
+          {/* Placeholder for future dashboard */}
+          <Route path="/dashboard" element={
+            <div className='flex justify-center items-center h-screen bg-gray-900 text-white'>
+              <h1 className='text-3xl font-bold'>Welcome to Dashboard!</h1>
+            </div>
+          } />
+        </Routes>
+      </CartProvider>
     </Router>
   );
 }
