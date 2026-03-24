@@ -56,6 +56,19 @@ const MyBookings = () => {
         }
     };
 
+    const getStatusConfig = (status) => {
+        switch (status) {
+            case 'confirmed-not-scanned':
+                return { label: 'Active', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', dot: 'bg-emerald-500' };
+            case 'confirmed-scanned':
+                return { label: 'Scanned', color: 'text-slate-400', bg: 'bg-slate-50', border: 'border-slate-100', dot: 'bg-slate-300', blur: true };
+            case 'cancelled':
+                return { label: 'Cancelled', color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100', dot: 'bg-rose-500', blur: true };
+            default:
+                return { label: status, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', dot: 'bg-indigo-500' };
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
             <NavBar
@@ -107,48 +120,75 @@ const MyBookings = () => {
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                     >
-                        {bookings.map((booking) => (
-                            <motion.div
-                                key={booking.id}
-                                variants={itemVariants}
-                                whileHover={{ y: -4 }}
-                                className="bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col p-6"
-                            >
-                                <div className="flex justify-between items-start mb-6">
-                                    <div className="flex flex-col gap-1">
-                                        <h3 className="text-lg font-bold text-slate-900 leading-tight">
-                                            {booking.item_name}
-                                        </h3>
-                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
+                        {bookings.map((booking) => {
+                            const config = getStatusConfig(booking.status);
+                            return (
+                                <motion.div
+                                    key={booking.id}
+                                    variants={itemVariants}
+                                    whileHover={{ y: -4 }}
+                                    className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-500 overflow-hidden flex flex-col p-8 group relative"
+                                >
+                                    {/* Status Header */}
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${config.bg} ${config.border} border`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${config.dot} animate-pulse`} />
+                                            <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${config.color}`}>
+                                                {config.label}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                             <Utensils size={12} />
-                                            <span>Quantity: {booking.quantity}</span>
+                                            <span>Qty: {booking.quantity}</span>
                                         </div>
                                     </div>
-                                    <div className="bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">
-                                        {booking.status}
-                                    </div>
-                                </div>
 
-                                <div className="bg-slate-50 flex flex-col items-center justify-center p-6 rounded-2xl border border-slate-100 mb-6 group-hover:bg-white transition-colors duration-300">
-                                    <QRCodeSVG value={booking.qr_code_id} size={150} className="drop-shadow-sm" />
-                                    <p className="mt-4 font-mono text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
-                                        {booking.qr_code_id}
-                                    </p>
-                                </div>
-
-                                <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between text-slate-500">
-                                    <div className="flex items-center gap-2">
-                                        <Clock size={14} className="text-slate-400" />
-                                        <span className="text-xs font-medium">
-                                            {new Date(booking.booked_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                        </span>
+                                    <div className="mb-6">
+                                        <h3 className="text-xl font-black text-slate-900 leading-tight mb-1 group-hover:text-indigo-600 transition-colors duration-300">
+                                            {booking.item_name}
+                                        </h3>
+                                        <div className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
+                                            <Clock size={12} />
+                                            <span>
+                                                {new Date(booking.booked_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <span className="text-sm font-bold text-slate-900">₹{booking.item_cost * booking.quantity}</span>
-                                </div>
-                            </motion.div>
-                        ))}
+
+                                    {/* QR Code Area */}
+                                    <div className="relative mb-8 aspect-square w-full">
+                                        <div className={`absolute inset-0 bg-slate-50/50 rounded-3xl border border-slate-100 flex flex-col items-center justify-center p-8 transition-all duration-500 group-hover:bg-white ${config.blur ? 'blur-[8px]' : ''}`}>
+                                            <QRCodeSVG value={booking.qr_code_id} size={200} className="w-full h-full drop-shadow-sm" />
+                                        </div>
+                                        
+                                        {/* Status Overlays */}
+                                        {config.blur && (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                                                <div className={`w-12 h-12 ${config.bg} rounded-2xl flex items-center justify-center mb-4 border ${config.border} shadow-sm`}>
+                                                    {booking.status === 'cancelled' ? <Utensils className="text-rose-500 rotate-45" size={24} /> : <QrCode className={config.color} size={24} />}
+                                                </div>
+                                                <h4 className={`text-sm font-black uppercase tracking-widest ${config.color}`}>{config.label}</h4>
+                                                <p className="text-[10px] text-slate-500 font-bold mt-1 px-4 leading-relaxed">
+                                                    {booking.status === 'cancelled' ? 'This order has been cancelled.' : 'Collected from the mess counter.'}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-auto flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Total Bill</span>
+                                            <span className={`text-xl font-black ${config.blur ? 'text-slate-400' : 'text-slate-900 group-hover:text-indigo-600'} transition-colors`}>₹{booking.item_cost * booking.quantity}</span>
+                                        </div>
+                                        <div className="font-mono text-[9px] text-slate-300 font-bold uppercase tracking-[0.1em] group-hover:text-slate-400 transition-colors">
+                                            {booking.qr_code_id}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
                     </motion.div>
                 )}
             </main>

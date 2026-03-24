@@ -21,22 +21,25 @@ const RebatePage = () => {
 
     // Rebate Data
     const [rebates, setRebates] = useState([]);
+    const [dailyRates, setDailyRates] = useState([]);
     const [bills, setBills] = useState([]);
 
     useEffect(() => {
         // Fetch real API data for NavBar (Consistent with ExtrasPage)
         const fetchDashboardData = async () => {
             try {
-                const [profileRes, notifRes, rebatesRes, billsRes] = await Promise.all([
+                const [profileRes, notifRes, rebatesRes, billsRes, ratesRes] = await Promise.all([
                     api.get('/api/profile/'),
                     api.get('/api/notifications/'),
                     api.get('/api/rebates/'),
-                    api.get('/api/mess-bill/').catch(() => ({ data: [] }))
+                    api.get('/api/mess-bill/').catch(() => ({ data: [] })),
+                    api.get('/api/daily-rebate-refund/').catch(() => ({ data: [] }))
                 ]);
                 setProfile(profileRes.data);
                 setNotifications(notifRes.data?.results || notifRes.data || []);
                 setRebates(rebatesRes.data || []);
                 setBills(Array.isArray(billsRes.data) ? billsRes.data : []);
+                setDailyRates(Array.isArray(ratesRes.data) ? ratesRes.data : []);
             } catch (err) {
                 console.error("Error fetching dashboard data:", err);
                 // Fallback for visual testing
@@ -161,7 +164,7 @@ const RebatePage = () => {
                             <ul className="space-y-2 ml-8 text-sm text-blue-800 font-medium list-disc">
                                 <li>Minimum leave duration: 3 consecutive days</li>
                                 <li>Applications must be submitted at least 2 days before leave start date</li>
-                                <li>Rebate rate: ₹150 per day</li>
+                                <li>Rebate rate: Varies by month (Check your bill for details)</li>
                                 <li>Maximum 30 days of leave per semester</li>
                                 <li>Applications submitted after the deadline will not be processed</li>
                             </ul>
@@ -241,12 +244,13 @@ const RebatePage = () => {
                                         const diffTime = eDate - sDate;
                                         const durationDays = diffTime >= 0 ? Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 : 0;
                                         
-                                        // Calculate amount using daily_refund_rate based on the rebate month
+                                        // Calculate amount using dynamic daily rates from the backend
                                         const monthName = sDate.toLocaleString('default', { month: 'long' });
-                                        // If backend returns bill details without specific ?month=, try finding it:
-                                        const matchingBill = bills.find(b => b.month === monthName);
-                                        // Default to 150 if rate is missing (e.g. month bill not generated or no extra meals booked so not returned)
-                                        const dailyRate = matchingBill?.daily_refund_rate || 150; 
+                                        
+                                        // Try to find the rate for this specific month from our new API
+                                        const monthlyRateObj = dailyRates.find(r => r.month?.toLowerCase() === monthName.toLowerCase());
+                                        const dailyRate = monthlyRateObj ? parseFloat(monthlyRateObj.cost) : 150; 
+                                        
                                         const amount = durationDays * dailyRate;
                                         
                                         const displayId = `RBT-${item.id}`;
