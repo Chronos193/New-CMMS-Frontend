@@ -285,7 +285,7 @@ export default function NavBar({ profile, notifications: propNotifs, onOpenNotif
                                     <button 
                                         onClick={async () => {
                                             try { await api.post('/api/logout/'); } catch(e){}
-                                            window.location.href = '/login';
+                                            window.location.href = '/home';
                                         }}
                                         className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-colors"
                                     >

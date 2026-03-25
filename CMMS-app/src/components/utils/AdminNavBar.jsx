@@ -44,7 +44,7 @@ export default function AdminNavBar({ profile, notifications: propNotifs, onOpen
         } catch (err) {
             console.error("Logout failed:", err);
         }
-        window.location.href = '/login';
+        window.location.href = '/home';
     };
 
     const adminMenuLinks = [
