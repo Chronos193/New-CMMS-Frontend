@@ -1,281 +1,149 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import api from "../Api";
+import AdminNavBar from "../components/utils/AdminNavBar";
 
-// ── Inline SVG Icon Components ─────────────────────────────────────────────
-const Icon = ({ children, size = 20, style = {} }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0, ...style }}>
-    {children}
-  </svg>
-);
-
-const Icons = {
-  Menu: (p) => <Icon {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>,
-  Utensils: (p) => <Icon {...p}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></Icon>,
-  Bell: (p) => <Icon {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></Icon>,
-  User: (p) => <Icon {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>,
-  FileText: (p) => <Icon {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></Icon>,
-  Clock: (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>,
-  CheckCircle: (p) => <Icon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Icon>,
-  XCircle: (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></Icon>,
-  Rupee: (p) => <Icon {...p}><path d="M6 3h12"/><path d="M6 8h12"/><path d="M6 13l8.5 8"/><path d="M6 13h3a4 4 0 0 0 0-8"/></Icon>,
-  Search: (p) => <Icon {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Icon>,
-  Eye: (p) => <Icon {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></Icon>,
-  Check: (p) => <Icon {...p}><polyline points="20 6 9 17 4 12"/></Icon>,
-  X: (p) => <Icon {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Icon>,
-  ArrowRight: (p) => <Icon {...p}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></Icon>,
-  Calendar: (p) => <Icon {...p}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></Icon>,
-  Inbox: (p) => <Icon {...p}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></Icon>,
-  Save: (p) => <Icon {...p}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></Icon>,
-  CheckCircle2: (p) => <Icon {...p}><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="m9 12 2 2 4-4"/></Icon>,
+// ── Icons ──────────────────────────────────────────────────────────────────
+const Icon = {
+  FileText: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+  Clock: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  CheckCircle: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+  XCircle: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>,
+  Rupee: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12"/><path d="M6 8h12"/><path d="M6 13l8.5 8"/><path d="M6 13h3a4 4 0 0 0 0-8"/></svg>,
+  Search: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+  Eye: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
+  Check: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  X: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  ArrowRight: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+  Calendar: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+  Inbox: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>,
+  CheckCircle2: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="m9 12 2 2 4-4"/></svg>,
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────
-const DAILY_RATE = 120;
+const PER_PAGE = 8;
+const STATUS_LABELS = { pending: "Pending", approved: "Approved", rejected: "Rejected" };
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-const INITIAL_DATA = [
-  { id:1,  name:"Shubham Kumar Pandey", roll:"220850", mess:"Hall 5 Mess", from:"2026-03-10", to:"2026-03-17", days:7,  reason:"Going home for Holi festival celebrations",              applied:"2026-03-05", status:"Pending",  note:"" },
-  { id:2,  name:"Ananya Sharma",        roll:"220123", mess:"Hall 2 Mess", from:"2026-03-14", to:"2026-03-20", days:6,  reason:"Medical leave — fever and viral infection",              applied:"2026-03-12", status:"Approved", note:"Medical certificate verified." },
-  { id:3,  name:"Rohan Verma",          roll:"210456", mess:"Hall 7 Mess", from:"2026-03-01", to:"2026-03-05", days:4,  reason:"College sports tournament away match",                   applied:"2026-02-28", status:"Approved", note:"Sports captain approval attached." },
-  { id:4,  name:"Priya Nair",           roll:"220789", mess:"Hall 4 Mess", from:"2026-03-18", to:"2026-03-25", days:7,  reason:"Family function — sister wedding",                       applied:"2026-03-15", status:"Pending",  note:"" },
-  { id:5,  name:"Aditya Singh",         roll:"210987", mess:"Hall 5 Mess", from:"2026-02-20", to:"2026-02-25", days:5,  reason:"Internship interview travel to Bangalore",               applied:"2026-02-18", status:"Rejected", note:"Insufficient advance notice period." },
-  { id:6,  name:"Kavya Menon",          roll:"220654", mess:"Hall 2 Mess", from:"2026-03-22", to:"2026-03-30", days:8,  reason:"Research conference presentation at IIT Bombay",        applied:"2026-03-20", status:"Pending",  note:"" },
-  { id:7,  name:"Rahul Gupta",          roll:"210321", mess:"Hall 7 Mess", from:"2026-02-10", to:"2026-02-15", days:5,  reason:"Home visit — parents unwell",                            applied:"2026-02-08", status:"Approved", note:"" },
-  { id:8,  name:"Sneha Patel",          roll:"220543", mess:"Hall 4 Mess", from:"2026-03-05", to:"2026-03-07", days:2,  reason:"Dental surgery appointment",                             applied:"2026-03-03", status:"Approved", note:"Doctor slip received." },
-  { id:9,  name:"Varun Joshi",          roll:"210765", mess:"Hall 5 Mess", from:"2026-03-25", to:"2026-04-01", days:7,  reason:"Summer internship preparation and travel",               applied:"2026-03-22", status:"Pending",  note:"" },
-  { id:10, name:"Manya Agarwal",        roll:"220198", mess:"Hall 2 Mess", from:"2026-01-15", to:"2026-01-20", days:5,  reason:"Aunt marriage function in Jaipur",                       applied:"2026-01-12", status:"Approved", note:"" },
-  { id:11, name:"Deepak Chauhan",       roll:"210876", mess:"Hall 7 Mess", from:"2026-02-28", to:"2026-03-03", days:3,  reason:"National level chess tournament",                        applied:"2026-02-25", status:"Rejected", note:"Application submitted too late." },
-  { id:12, name:"Neha Mishra",          roll:"220432", mess:"Hall 4 Mess", from:"2026-03-12", to:"2026-03-18", days:6,  reason:"International student exchange visit to NUS Singapore",  applied:"2026-03-10", status:"Pending",  note:"" },
-].map(d => ({ ...d, amount: d.days * DAILY_RATE }));
-
-// ── Status helpers ────────────────────────────────────────────────────────
-const STATUS_CONFIG = {
-  Pending:  { bg: "#fef3c7", color: "#f59e0b", Icon: Icons.Clock },
-  Approved: { bg: "#dcfce7", color: "#22c55e", Icon: Icons.CheckCircle },
-  Rejected: { bg: "#fee2e2", color: "#ef4444", Icon: Icons.XCircle },
+// ── Helpers ───────────────────────────────────────────────────────────────
+const diffDays = (start, end) => {
+  const s = new Date(start);
+  const e = new Date(end);
+  const res = Math.ceil((e - s) / (1000 * 60 * 60 * 24)) + 1;
+  return res > 0 ? res : 0;
 };
 
-// ── Styles (CSS-in-JS objects) ────────────────────────────────────────────
-const S = {
-  // layout
-  body:       { fontFamily:"'Manrope', sans-serif", background:"#f0f1fb", minHeight:"100vh", color:"#1a1b3a" },
-  nav:        { background:"#fff", borderBottom:"1px solid #e5e6f7", display:"flex", alignItems:"center", padding:"0 28px", height:64, gap:14, position:"sticky", top:0, zIndex:100 },
-  navIcon:    { width:38, height:38, background:"#5b5ef4", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", flexShrink:0 },
-  navTitle:   { fontWeight:800, fontSize:17, color:"#1a1b3a", lineHeight:1.1 },
-  navSub:     { fontSize:10, letterSpacing:".12em", color:"#7b7da8", fontWeight:600, textTransform:"uppercase" },
-  navAvatar:  { width:36, height:36, borderRadius:"50%", background:"#f7f7fd", display:"flex", alignItems:"center", justifyContent:"center", color:"#7b7da8", cursor:"pointer", border:"2px solid #e5e6f7" },
-  navBellWrap:{ position:"relative", cursor:"pointer", display:"flex", alignItems:"center", color:"#7b7da8" },
-  navDot:     { position:"absolute", top:0, right:0, width:8, height:8, background:"#ef4444", borderRadius:"50%", border:"2px solid #fff" },
-  main:       { padding:"32px 40px", maxWidth:1320, margin:"0 auto" },
-
-  // hero
-  hero:       { background:"#fff", borderRadius:16, padding:"28px 32px", display:"flex", alignItems:"center", gap:20, boxShadow:"0 2px 16px rgba(91,94,244,0.07)", marginBottom:28 },
-  heroIcon:   { width:52, height:52, background:"#ededfd", borderRadius:14, display:"flex", alignItems:"center", justifyContent:"center", color:"#5b5ef4", flexShrink:0 },
-  heroBadge:  { marginLeft:"auto", background:"#5b5ef4", color:"#fff", padding:"6px 16px", borderRadius:50, fontSize:12, fontWeight:700, whiteSpace:"nowrap" },
-
-  // stats
-  statsGrid:  { display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:28 },
-  statCard:   { background:"#fff", borderRadius:10, padding:"20px 22px", boxShadow:"0 2px 16px rgba(91,94,244,0.07)", display:"flex", alignItems:"center", gap:14, cursor:"pointer", transition:"transform .18s, box-shadow .18s" },
-  statIcon:   { width:42, height:42, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
-  statNum:    { fontSize:26, fontWeight:800, color:"#1a1b3a", lineHeight:1 },
-  statLabel:  { fontSize:12, color:"#7b7da8", fontWeight:600, marginTop:3 },
-
-  // toolbar
-  toolbar:    { display:"flex", alignItems:"center", gap:12, marginBottom:20, flexWrap:"wrap" },
-  searchWrap: { position:"relative", flex:1, minWidth:200 },
-  searchIcon: { position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:"#7b7da8", display:"flex", alignItems:"center", pointerEvents:"none" },
-  input:      { width:"100%", padding:"10px 14px 10px 38px", border:"1.5px solid #e5e6f7", borderRadius:10, background:"#fff", fontFamily:"inherit", fontSize:14, color:"#1a1b3a", outline:"none" },
-  select:     { padding:"10px 32px 10px 14px", border:"1.5px solid #e5e6f7", borderRadius:10, background:"#fff", fontFamily:"inherit", fontSize:14, color:"#1a1b3a", outline:"none", cursor:"pointer", appearance:"none",
-                backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237b7da8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")",
-                backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center" },
-
-  // table
-  tableWrap:  { background:"#fff", borderRadius:16, boxShadow:"0 2px 16px rgba(91,94,244,0.07)", overflow:"hidden" },
-  thead:      { background:"#f7f7fd" },
-  th:         { padding:"14px 18px", textAlign:"left", fontSize:11, fontWeight:700, color:"#7b7da8", textTransform:"uppercase", letterSpacing:".1em", borderBottom:"1.5px solid #e5e6f7" },
-  td:         { padding:"16px 18px", fontSize:14, verticalAlign:"middle", borderBottom:"1px solid #e5e6f7" },
-
-  // badges
-  catBadge:   { display:"inline-block", padding:"4px 10px", borderRadius:6, fontSize:11, fontWeight:700, letterSpacing:".06em", background:"#ededfd", color:"#5b5ef4" },
-  daysBadge:  { display:"inline-flex", alignItems:"center", gap:4, background:"#ededfd", color:"#5b5ef4", padding:"4px 10px", borderRadius:6, fontSize:12, fontWeight:700 },
-
-  // action btns
-  aibtn:      { width:32, height:32, borderRadius:8, border:"1.5px solid #e5e6f7", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", background:"#fff", transition:"all .15s" },
-
-  // modal
-  overlay:    { position:"fixed", inset:0, background:"rgba(26,27,58,.45)", backdropFilter:"blur(4px)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center" },
-  modal:      { background:"#fff", borderRadius:16, padding:32, width:560, maxWidth:"95vw", boxShadow:"0 4px 24px rgba(91,94,244,0.12)", animation:"slideUp .22s ease" },
-  mlabel:     { fontSize:11, fontWeight:700, color:"#7b7da8", letterSpacing:".1em", textTransform:"uppercase", marginBottom:6 },
-  mval:       { fontSize:14, fontWeight:600, color:"#1a1b3a" },
-  mdesc:      { background:"#f7f7fd", border:"1.5px solid #e5e6f7", borderRadius:10, padding:14, fontSize:14, lineHeight:1.65, color:"#1a1b3a" },
-  calcBox:    { background:"#ededfd", borderRadius:10, padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 },
-  mnote:      { width:"100%", padding:"10px 14px", border:"1.5px solid #e5e6f7", borderRadius:10, fontFamily:"inherit", fontSize:14, color:"#1a1b3a", background:"#f7f7fd", outline:"none", resize:"vertical", minHeight:72 },
+const getMonthFromDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return MONTH_NAMES[d.getMonth()];
 };
 
-// ── Sub-components ────────────────────────────────────────────────────────
-
-function StatusBadge({ status, size = 11 }) {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.Pending;
-  const Ic = cfg.Icon;
-  return (
-    <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"5px 11px", borderRadius:50, fontSize:12, fontWeight:700, background:cfg.bg, color:cfg.color }}>
-      <Ic size={size} /> {status}
-    </span>
-  );
+/* ─── Toast hook ─── */
+function useToast() {
+    const [toast, setToast] = useState({ visible: false, msg: "" });
+    const showToast = useCallback((msg) => {
+        setToast({ visible: true, msg });
+        setTimeout(() => setToast(t => ({ ...t, visible: false })), 2800);
+    }, []);
+    return { toast, showToast };
 }
 
-function ActionBtn({ onClick, color, hoverBg, title, children }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <button title={title} onClick={onClick}
-      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{ ...S.aibtn, color: hov ? "#fff" : color, background: hov ? hoverBg : "#fff", borderColor: hov ? hoverBg : "#e5e6f7" }}>
-      {children}
-    </button>
-  );
-}
-
-function StatCard({ label, value, iconBg, iconColor, IconComp, onClick }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <div onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{ ...S.statCard, transform: hov ? "translateY(-2px)" : "none", boxShadow: hov ? "0 4px 24px rgba(91,94,244,0.12)" : "0 2px 16px rgba(91,94,244,0.07)" }}>
-      <div style={{ ...S.statIcon, background: iconBg, color: iconColor }}>
-        <IconComp size={20} />
-      </div>
-      <div>
-        <div style={S.statNum}>{value}</div>
-        <div style={S.statLabel}>{label}</div>
-      </div>
-    </div>
-  );
-}
-
-// ── Modal ─────────────────────────────────────────────────────────────────
-function RebateModal({ item, onClose, onAction }) {
-  const [note, setNote] = useState(item.note || "");
-
-  if (!item) return null;
-
-  const handleAction = (status) => {
-    onAction(item.id, status, note);
-    onClose();
-  };
-
-  return (
-    <div style={S.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div style={S.modal}>
-        {/* Header */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:22 }}>
-          <div style={{ fontSize:18, fontWeight:800 }}>Rebate Application</div>
-          <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", color:"#7b7da8", width:32, height:32, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center" }}>
-            <Icons.X size={18} />
-          </button>
-        </div>
-
-        {/* Student info */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:16 }}>
-          {[["Student Name", item.name], ["Roll No.", item.roll], ["Mess", item.mess], ["Applied On", item.applied]].map(([label, val]) => (
-            <div key={label}>
-              <div style={S.mlabel}>{label}</div>
-              <div style={S.mval}>{val}</div>
-            </div>
-          ))}
-        </div>
-
-        <hr style={{ border:"none", borderTop:"1px solid #e5e6f7", margin:"0 0 16px" }} />
-
-        {/* Leave details */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:16 }}>
-          {[["From Date", item.from], ["To Date", item.to], ["Total Days", item.days + " days"], ["Daily Rate", "₹" + DAILY_RATE + " / day"]].map(([label, val]) => (
-            <div key={label}>
-              <div style={S.mlabel}>{label}</div>
-              <div style={S.mval}>{val}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Reason */}
-        <div style={{ marginBottom:16 }}>
-          <div style={S.mlabel}>Reason for Leave</div>
-          <div style={S.mdesc}>{item.reason}</div>
-        </div>
-
-        {/* Rebate calc */}
-        <div style={S.calcBox}>
-          <div>
-            <div style={{ fontSize:13, fontWeight:600, color:"#5b5ef4" }}>Calculated Rebate Amount</div>
-            <div style={{ fontSize:11, color:"#5b5ef4", opacity:.7, marginTop:1 }}>{item.days}d × ₹{DAILY_RATE}/day</div>
-          </div>
-          <div style={{ fontSize:22, fontWeight:800, color:"#5b5ef4" }}>₹{item.amount.toLocaleString("en-IN")}</div>
-        </div>
-
-        {/* Admin note */}
-        <div style={{ marginBottom:20 }}>
-          <div style={S.mlabel}>Admin Note (optional)</div>
-          <textarea style={S.mnote} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note for the student…" />
-        </div>
-
-        {/* Actions */}
-        <div style={{ display:"flex", gap:10 }}>
-          <ModalBtn color="#22c55e" onClick={() => handleAction("Approved")}>
-            <Icons.Check size={15} /> Approve
-          </ModalBtn>
-          <ModalBtn color="#ef4444" onClick={() => handleAction("Rejected")}>
-            <Icons.X size={15} /> Reject
-          </ModalBtn>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ModalBtn({ color, onClick, children }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <button onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{ flex:1, padding:12, borderRadius:10, fontFamily:"inherit", fontSize:14, fontWeight:700, cursor:"pointer", border:"none", background:color, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", gap:6, opacity: hov ? .88 : 1, transform: hov ? "translateY(-1px)" : "none", transition:"all .15s" }}>
-      {children}
-    </button>
-  );
-}
-
-// ── Toast ─────────────────────────────────────────────────────────────────
-function Toast({ msg, show }) {
-  return (
-    <div style={{
-      position:"fixed", bottom:28, left:"50%",
-      transform: show ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(80px)",
-      background:"#1a1b3a", color:"#fff", padding:"12px 22px", borderRadius:50,
-      fontSize:14, fontWeight:600, zIndex:300, pointerEvents:"none", whiteSpace:"nowrap",
-      display:"flex", alignItems:"center", gap:8,
-      transition:"transform .3s cubic-bezier(.34,1.56,.64,1)",
-    }}>
-      <Icons.CheckCircle2 size={16} /> <span>{msg}</span>
-    </div>
-  );
-}
-
-// ── Main Page ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════
+// Main Component
+// ══════════════════════════════════════════
 export default function AdminRebatePage() {
-  const [data, setData] = useState(INITIAL_DATA);
+  const [data, setData] = useState([]);
+  const [rates, setRates] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [monthFilter, setMonthFilter] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
   const [activeId, setActiveId] = useState(null);
-  const [toast, setToast] = useState({ show: false, msg: "" });
-  const PER = 8;
+  const [profile, setProfile] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const { toast, showToast } = useToast();
 
-  // Stats
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [rebateRes, profileRes, notifRes, ratesRes] = await Promise.all([
+          api.get('/api/rebates/'),
+          api.get('/api/profile/'),
+          api.get('/api/notifications/'),
+          api.get('/api/daily-rebate-refund/')
+        ]);
+
+        const currentRates = ratesRes.data || [];
+        setRates(currentRates);
+
+        const mapped = rebateRes.data.map(d => {
+          const days = diffDays(d.start_date, d.end_date);
+          const month = getMonthFromDate(d.start_date);
+          const rateObj = currentRates.find(r => r.month.toLowerCase() === month.toLowerCase());
+          const rate = rateObj ? parseFloat(rateObj.cost) : 120; // fallback to 120 if not found
+
+          return {
+            ...d,
+            name: d.user_name,
+            roll: d.user_email.split('@')[0],
+            mess: "Hall Mess", 
+            from: d.start_date,
+            to: d.end_date,
+            days: days,
+            reason: d.location,
+            applied: new Date(d.created_at).toISOString().split('T')[0],
+            rate: rate,
+            amount: days * rate,
+            status: d.status.toLowerCase()
+          };
+        });
+
+        setData(mapped);
+        setProfile(profileRes.data);
+        setNotifications(notifRes.data?.results || notifRes.data || []);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleOpenNotifications = async () => {
+    const hasUnseen = notifications.some(n => n.category === 'unseen');
+    if (!hasUnseen) return;
+    setNotifications(prev => prev.map(n => ({ ...n, category: 'seen' })));
+    try {
+      await api.post('/api/notifications/mark-seen/');
+    } catch (error) {
+      console.error('Failed to mark notifications as seen:', error);
+    }
+  };
+
+  const updateRebateStatus = async (id, newStatus, note = "") => {
+    try {
+      await api.post('/api/admin/rebates/update-status/', {
+        rebate_id: id,
+        status: newStatus.toLowerCase(),
+        note: note
+      });
+      setData(prev => prev.map(d => d.id === id ? { ...d, status: newStatus.toLowerCase(), note } : d));
+      const item = data.find(d => d.id === id);
+      showToast(`${newStatus}: ${item?.name}`);
+      setActiveId(null);
+    } catch (err) {
+      console.error("Error updating rebate:", err);
+      showToast("Failed to update status");
+    }
+  };
+
+  // ── Stats ──
   const stats = useMemo(() => ({
-    pending:  data.filter(d => d.status === "Pending").length,
-    approved: data.filter(d => d.status === "Approved").length,
-    rejected: data.filter(d => d.status === "Rejected").length,
-    total:    data.filter(d => d.status === "Approved").reduce((s, d) => s + d.amount, 0),
+    pending: data.filter(d => d.status === "pending").length,
+    approved: data.filter(d => d.status === "approved").length,
+    rejected: data.filter(d => d.status === "rejected").length,
+    total: data.filter(d => d.status === "approved").reduce((s, d) => s + d.amount, 0),
   }), [data]);
 
-  // Filtered
+  // ── Filtered ──
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return data.filter(d =>
@@ -285,179 +153,166 @@ export default function AdminRebatePage() {
     );
   }, [data, search, statusFilter, monthFilter]);
 
-  const pages = Math.max(1, Math.ceil(filtered.length / PER));
-  const safePage = Math.min(currentPage, pages);
-  const slice = filtered.slice((safePage - 1) * PER, safePage * PER);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const slice = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
 
   const activeItem = data.find(d => d.id === activeId) || null;
 
-  const showToast = (msg) => {
-    setToast({ show: true, msg });
-    setTimeout(() => setToast({ show: false, msg: "" }), 2800);
-  };
-
-  const quickStatus = (id, status) => {
-    const item = data.find(d => d.id === id);
-    setData(prev => prev.map(d => d.id === id ? { ...d, status } : d));
-    showToast((status === "Approved" ? "✓ Approved: " : "✗ Rejected: ") + item?.name);
-  };
-
-  const handleModalAction = (id, status, note) => {
-    const item = data.find(d => d.id === id);
-    setData(prev => prev.map(d => d.id === id ? { ...d, status, note } : d));
-    showToast((status === "Approved" ? "✓ Rebate approved — " : "✗ Application rejected — ") + item?.name);
-    setActiveId(null);
-  };
-
-  const filterByStatus = (s) => { setStatusFilter(s); setCurrentPage(1); };
-
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Manrope', sans-serif; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: none; opacity:1; } }
-        tr:hover td { background: #f7f7fd; }
-        input:focus { border-color: #5b5ef4 !important; }
-        select:focus { border-color: #5b5ef4 !important; }
-        textarea:focus { border-color: #5b5ef4 !important; }
-      `}</style>
+    <div className="min-h-screen bg-slate-50 font-['Manrope'] text-slate-900 pb-12">
+      <AdminNavBar profile={profile} notifications={notifications} onOpenNotifications={handleOpenNotifications} />
 
-      <div style={S.body}>
+      <main className="max-w-[1320px] mx-auto px-4 md:px-10 py-8">
 
-        {/* ── NAV ── */}
-        <nav style={S.nav}>
-          <div style={{ cursor:"pointer", color:"#7b7da8", display:"flex", alignItems:"center" }}>
-            <Icons.Menu size={20} />
+        {/* ── HERO ── */}
+        <div className="bg-white rounded-2xl p-7 md:p-8 flex items-center gap-5 shadow-sm shadow-indigo-100/50 mb-7 border border-slate-100">
+          <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shrink-0">
+            <Icon.FileText size={26} />
           </div>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={S.navIcon}><Icons.Utensils size={19} /></div>
-            <div>
-              <div style={S.navTitle}>CMMS</div>
-              <div style={S.navSub}>Centralized Mess Management</div>
+          <div className="flex-1">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Rebate Management</h1>
+            <p className="text-slate-500 text-sm font-medium mt-0.5">Review and approve student mess leave and rebate applications.</p>
+          </div>
+          <div className="hidden md:block bg-indigo-600 text-white px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shadow-md shadow-indigo-500/20">
+            {data.length} Total Applications
+          </div>
+        </div>
+
+        {/* ── STATS ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8 text-slate-900">
+          {[
+            { key: "pending", label: "Pending", val: stats.pending, bg: "bg-amber-50", color: "text-amber-600", border: "border-amber-100", Ic: Icon.Clock },
+            { key: "approved", label: "Approved", val: stats.approved, bg: "bg-emerald-50", color: "text-emerald-600", border: "border-emerald-100", Ic: Icon.CheckCircle },
+            { key: "rejected", label: "Rejected", val: stats.rejected, bg: "bg-rose-50", color: "text-rose-600", border: "border-rose-100", Ic: Icon.XCircle },
+            { key: "total", label: "Total Approved", val: "₹" + stats.total.toLocaleString("en-IN"), bg: "bg-indigo-50", color: "text-indigo-600", border: "border-indigo-100", Ic: Icon.Rupee },
+          ].map((s) => {
+            const SIcon = s.Ic;
+            return (
+              <button 
+                key={s.key} 
+                className={`bg-white rounded-xl p-5 shadow-sm shadow-indigo-100/30 border border-slate-100 flex items-center gap-4 transition-all hover:-translate-y-0.5 hover:shadow-md ${statusFilter === s.key ? 'ring-2 ring-indigo-500/20 border-indigo-200' : ''}`}
+                onClick={() => { setStatusFilter(s.key === "total" ? "" : s.key); setPage(1); }}
+              >
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${s.bg} ${s.color} border ${s.border}`}>
+                  <SIcon size={20} />
+                </div>
+                <div className="text-left">
+                  <div className="text-2xl font-extrabold leading-none">{s.val}</div>
+                  <div className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1.5">{s.label}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── TOOLBAR ── */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
+          <div className="relative flex-1 w-full">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+              <Icon.Search size={16} />
             </div>
+            <input
+              type="text"
+              placeholder="Search by roll, name, reason…"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder:text-slate-400 shadow-sm"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
+            />
           </div>
-          <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:16 }}>
-            <div style={S.navBellWrap}>
-              <Icons.Bell size={20} />
-              <div style={S.navDot} />
-            </div>
-            <div style={S.navAvatar}><Icons.User size={18} /></div>
-          </div>
-        </nav>
-
-        {/* ── MAIN ── */}
-        <main style={S.main}>
-
-          {/* Hero */}
-          <div style={S.hero}>
-            <div style={S.heroIcon}><Icons.FileText size={26} /></div>
-            <div>
-              <h1 style={{ fontSize:24, fontWeight:800, color:"#1a1b3a" }}>Rebate Management</h1>
-              <p style={{ color:"#7b7da8", fontSize:14, marginTop:2, fontWeight:500 }}>Review and approve student mess leave and rebate applications.</p>
-            </div>
-            <div style={S.heroBadge}>{data.length} Total Applications</div>
-          </div>
-
-          {/* Stats */}
-          <div style={S.statsGrid}>
-            <StatCard label="Pending"        value={stats.pending}  iconBg="#fef3c7" iconColor="#f59e0b" IconComp={Icons.Clock}       onClick={() => filterByStatus("Pending")} />
-            <StatCard label="Approved"       value={stats.approved} iconBg="#dcfce7" iconColor="#22c55e" IconComp={Icons.CheckCircle}  onClick={() => filterByStatus("Approved")} />
-            <StatCard label="Rejected"       value={stats.rejected} iconBg="#fee2e2" iconColor="#ef4444" IconComp={Icons.XCircle}      onClick={() => filterByStatus("Rejected")} />
-            <StatCard label="Total Approved" value={"₹" + stats.total.toLocaleString("en-IN")} iconBg="#ededfd" iconColor="#5b5ef4" IconComp={Icons.Rupee} onClick={() => filterByStatus("")} />
-          </div>
-
-          {/* Toolbar */}
-          <div style={S.toolbar}>
-            <div style={S.searchWrap}>
-              <div style={S.searchIcon}><Icons.Search size={15} /></div>
-              <input style={S.input} placeholder="Search by roll no, name, reason…" value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }} />
-            </div>
-            <select style={S.select} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <select 
+              className="flex-1 sm:flex-none appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 pr-10 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all cursor-pointer bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2212%22_height=%2212%22_viewBox=%220_0_24_24%22_fill=%22none%22_stroke=%22%2364748b%22_stroke-width=%222.5%22%3E%3Cpath_d=%22M6_9l6_6_6-6%22/%3E%3C/svg%3E')] bg-[length:14px] bg-[right_12px_center] bg-no-repeat shadow-sm"
+              value={statusFilter} 
+              onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
+            >
               <option value="">All Statuses</option>
-              <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
+              {Object.entries(STATUS_LABELS).map(([k,v]) => (<option key={k} value={k}>{v}</option>))}
             </select>
-            <select style={S.select} value={monthFilter} onChange={e => { setMonthFilter(e.target.value); setCurrentPage(1); }}>
+            <select 
+              className="flex-1 sm:flex-none appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 pr-10 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all cursor-pointer bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2212%22_height=%2212%22_viewBox=%220_0_24_24%22_fill=%22none%22_stroke=%22%2364748b%22_stroke-width=%222.5%22%3E%3Cpath_d=%22M6_9l6_6_6-6%22/%3E%3C/svg%3E')] bg-[length:14px] bg-[right_12px_center] bg-no-repeat shadow-sm"
+              value={monthFilter} 
+              onChange={e => { setMonthFilter(e.target.value); setPage(1); }}
+            >
               <option value="">All Months</option>
-              <option value="2026-01">Jan 2026</option>
-              <option value="2026-02">Feb 2026</option>
-              <option value="2026-03">Mar 2026</option>
+              {["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"].map(m => (
+                <option key={m} value={m}>{new Date(m).toLocaleString('default', { month: 'short', year: 'numeric' })}</option>
+              ))}
             </select>
           </div>
+        </div>
 
-          {/* Table */}
-          <div style={S.tableWrap}>
-            <table style={{ width:"100%", borderCollapse:"collapse" }}>
-              <thead style={S.thead}>
-                <tr>
-                  {["#","Student","Leave Period","Days","Reason","Applied On","Rebate Amt","Status","Actions"].map(h => (
-                    <th key={h} style={S.th}>{h}</th>
-                  ))}
+        {/* ── TABLE ── */}
+        <div className="bg-white rounded-2xl shadow-sm shadow-indigo-100/50 border border-slate-100 overflow-hidden text-slate-900">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse min-w-[1000px]">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">#</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Student</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Leave Period</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Days</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reason/Location</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Applied</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rebate Amount</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                  <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-50">
                 {slice.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ textAlign:"center", padding:"60px 20px", color:"#7b7da8", fontWeight:600 }}>
-                      <div style={{ display:"flex", justifyContent:"center", marginBottom:12, color:"#e5e6f7" }}>
-                        <Icons.Inbox size={48} />
+                    <td colSpan={9} className="py-24 text-center">
+                      <div className="flex flex-col items-center justify-center opacity-30 grayscale scale-110">
+                        <Icon.Inbox size={48} />
+                        <p className="mt-4 text-sm font-bold tracking-widest uppercase">No applications found</p>
                       </div>
-                      No rebate applications match your filters.
                     </td>
                   </tr>
                 ) : slice.map((d, i) => (
-                  <tr key={d.id}>
-                    <td style={{ ...S.td, color:"#7b7da8", fontWeight:700, fontSize:13 }}>{(safePage-1)*PER+i+1}</td>
-
-                    <td style={S.td}>
-                      <div style={{ fontWeight:700 }}>{d.name}</div>
-                      <div style={{ fontSize:12, color:"#7b7da8", marginTop:2 }}>{d.roll} · {d.mess}</div>
+                  <tr key={d.id} className="hover:bg-indigo-50/20 transition-colors group">
+                    <td className="px-6 py-5 text-xs font-bold text-slate-300">{(safePage - 1) * PER_PAGE + i + 1}</td>
+                    <td className="px-6 py-5">
+                      <div className="text-sm font-bold text-slate-800">{d.name}</div>
+                      <div className="text-[11px] font-medium text-slate-400 mt-0.5">{d.roll} · {d.mess}</div>
                     </td>
-
-                    <td style={S.td}>
-                      <div style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:13, fontWeight:600 }}>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
                         <span>{d.from}</span>
-                        <span style={{ color:"#7b7da8" }}><Icons.ArrowRight size={12} /></span>
+                        <Icon.ArrowRight size={12} className="text-slate-300" />
                         <span>{d.to}</span>
                       </div>
                     </td>
-
-                    <td style={S.td}>
-                      <span style={S.daysBadge}>
-                        <Icons.Calendar size={11} /> {d.days}d
+                    <td className="px-6 py-5">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[11px] font-bold border border-indigo-100">
+                        <Icon.Calendar size={11} /> {d.days}d
                       </span>
                     </td>
-
-                    <td style={S.td}>
-                      <span style={{ color:"#1a1b3a", fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", maxWidth:180, display:"block" }}>{d.reason}</span>
+                    <td className="px-6 py-5 max-w-[200px]">
+                      <div className="text-sm font-medium text-slate-500 truncate">{d.reason}</div>
                     </td>
-
-                    <td style={{ ...S.td, color:"#7b7da8", fontSize:13, fontWeight:600 }}>{d.applied}</td>
-
-                    <td style={S.td}>
-                      <div style={{ fontWeight:800, fontSize:14 }}>₹{d.amount.toLocaleString("en-IN")}</div>
-                      <div style={{ fontSize:11, color:"#7b7da8", marginTop:1 }}>{d.days}d × ₹{DAILY_RATE}</div>
+                    <td className="px-6 py-5 text-xs font-bold text-slate-400">{d.applied}</td>
+                    <td className="px-6 py-5">
+                      <div className="text-sm font-extrabold text-slate-800">₹{d.amount.toLocaleString("en-IN")}</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{d.days}d × ₹{d.rate}</div>
                     </td>
-
-                    <td style={S.td}><StatusBadge status={d.status} /></td>
-
-                    <td style={{ ...S.td, borderBottom: i === slice.length - 1 ? "none" : "1px solid #e5e6f7" }}>
-                      <div style={{ display:"flex", gap:6 }}>
-                        <ActionBtn color="#5b5ef4" hoverBg="#5b5ef4" title="View & Manage" onClick={() => setActiveId(d.id)}>
-                          <Icons.Eye size={15} />
-                        </ActionBtn>
-                        {d.status !== "Approved" && (
-                          <ActionBtn color="#22c55e" hoverBg="#22c55e" title="Approve" onClick={() => quickStatus(d.id, "Approved")}>
-                            <Icons.Check size={15} />
-                          </ActionBtn>
+                    <td className="px-6 py-5">
+                      <StatusBadge status={d.status} />
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex justify-center gap-2">
+                        <button className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-indigo-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm" onClick={() => setActiveId(d.id)} title="View & Manage">
+                          <Icon.Eye size={16} />
+                        </button>
+                        {d.status !== "approved" && (
+                          <button className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-emerald-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all shadow-sm" onClick={() => updateRebateStatus(d.id, "approved")} title="Approve">
+                            <Icon.Check size={16} />
+                          </button>
                         )}
-                        {d.status !== "Rejected" && (
-                          <ActionBtn color="#ef4444" hoverBg="#ef4444" title="Reject" onClick={() => quickStatus(d.id, "Rejected")}>
-                            <Icons.X size={15} />
-                          </ActionBtn>
+                        {d.status !== "rejected" && (
+                          <button className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-rose-600 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm" onClick={() => updateRebateStatus(d.id, "rejected")} title="Reject">
+                            <Icon.X size={16} />
+                          </button>
                         )}
                       </div>
                     </td>
@@ -465,41 +320,138 @@ export default function AdminRebatePage() {
                 ))}
               </tbody>
             </table>
-
-            {/* Pagination */}
-            {pages > 1 && (
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", gap:8, padding:"16px 18px", borderTop:"1px solid #e5e6f7" }}>
-                <span style={{ fontSize:13, color:"#7b7da8", fontWeight:600, marginRight:4 }}>Page {safePage} of {pages}</span>
-                <PgBtn disabled={safePage === 1}   onClick={() => setCurrentPage(p => p - 1)}>‹</PgBtn>
-                {Array.from({ length: pages }, (_, i) => i + 1).map(p => (
-                  <PgBtn key={p} active={p === safePage} onClick={() => setCurrentPage(p)}>{p}</PgBtn>
-                ))}
-                <PgBtn disabled={safePage === pages} onClick={() => setCurrentPage(p => p + 1)}>›</PgBtn>
-              </div>
-            )}
           </div>
-        </main>
 
-        {/* Modal */}
-        {activeId && activeItem && (
-          <RebateModal item={activeItem} onClose={() => setActiveId(null)} onAction={handleModalAction} />
-        )}
+          {/* ── PAGINATION ── */}
+          {totalPages > 1 && (
+            <div className="px-6 py-5 border-t border-slate-50 flex items-center justify-between bg-slate-50/30">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Page {safePage} of {totalPages}</span>
+              <div className="flex gap-1.5">
+                <PaginationBtn disabled={safePage === 1} onClick={() => setPage(p => p - 1)}>&#8249;</PaginationBtn>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <PaginationBtn key={p} active={p === safePage} onClick={() => setPage(p)}>{p}</PaginationBtn>
+                ))}
+                <PaginationBtn disabled={safePage === totalPages} onClick={() => setPage(p => p + 1)}>&#8250;</PaginationBtn>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
 
-        {/* Toast */}
-        <Toast show={toast.show} msg={toast.msg} />
+      {/* ── MODAL ── */}
+      {activeId && activeItem && (
+        <RebateModal item={activeItem} onClose={() => setActiveId(null)} onAction={updateRebateStatus} />
+      )}
+
+      {/* ── TOAST ── */}
+      <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] transition-all duration-300 transform ${toast.visible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-90 pointer-events-none'}`}>
+        <div className="bg-slate-900/95 backdrop-blur-md text-white px-6 py-3 rounded-full text-sm font-bold flex items-center gap-2.5 shadow-2xl border border-white/10 ring-4 ring-slate-900/10">
+          <div className="text-emerald-400"><Icon.CheckCircle2 /></div>
+          <span>{toast.msg}</span>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
-function PgBtn({ onClick, disabled, active, children }) {
-  const [hov, setHov] = useState(false);
-  const highlight = active || hov;
+function StatusBadge({ status }) {
+  const configs = {
+    pending: { bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-100", Ic: Icon.Clock },
+    approved: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-100", Ic: Icon.CheckCircle },
+    rejected: { bg: "bg-rose-50", text: "text-rose-600", border: "border-rose-100", Ic: Icon.XCircle },
+  };
+  const c = configs[status] || configs.pending;
+  const Ic = c.Ic;
   return (
-    <button onClick={onClick} disabled={disabled}
-      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{ width:34, height:34, borderRadius:9, border:"1.5px solid " + (highlight ? "#5b5ef4" : "#e5e6f7"), background: highlight ? "#5b5ef4" : "#fff", color: highlight ? "#fff" : "#1a1b3a", fontFamily:"inherit", fontSize:13, fontWeight:700, cursor: disabled ? "not-allowed" : "pointer", display:"flex", alignItems:"center", justifyContent:"center", opacity: disabled ? .35 : 1, transition:"all .15s" }}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold tracking-tight shadow-sm border ${c.bg} ${c.text} ${c.border}`}>
+      <Ic size={11} /> {status.charAt(0).toUpperCase() + status.slice(1)}
+    </span>
+  );
+}
+
+function PaginationBtn({ onClick, disabled, active, children }) {
+  return (
+    <button 
+      onClick={onClick} 
+      disabled={disabled}
+      className={`w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all shadow-sm ${
+        active 
+        ? "bg-indigo-600 text-white shadow-indigo-600/20" 
+        : "bg-white border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-30 disabled:pointer-events-none"
+      }`}
+    >
       {children}
     </button>
+  );
+}
+
+function RebateModal({ item, onClose, onAction }) {
+  const [note, setNote] = useState(item.note || "");
+  const handleAction = (status) => onAction(item.id, status, note);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+      <div className="relative bg-white rounded-2xl w-full max-w-xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <h3 className="font-extrabold text-xl text-slate-800">Rebate Application Details</h3>
+          <button className="p-2 hover:bg-slate-200/50 rounded-xl text-slate-400 transition-colors" onClick={onClose}><Icon.X size={20} /></button>
+        </div>
+        
+        <div className="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
+          {/* Info Grid */}
+          <div className="grid grid-cols-2 gap-y-6 gap-x-8">
+            <InfoItem label="Student Name" val={item.name} />
+            <InfoItem label="Roll / Email" val={item.roll} />
+            <InfoItem label="Applied Period" val={`${item.from} — ${item.to}`} />
+            <InfoItem label="Mess Hall" val={item.mess} />
+            <InfoItem label="Total Duration" val={`${item.days} Days`} />
+            <InfoItem label="Applied Date" val={item.applied} />
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-1.5">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reason for mess leave</div>
+            <div className="text-sm font-medium text-slate-600 leading-relaxed italic italic">"{item.reason}"</div>
+          </div>
+
+          {/* Refund Calc */}
+          <div className="bg-indigo-600 rounded-2xl p-6 text-white flex items-center justify-between shadow-xl shadow-indigo-600/20">
+            <div>
+              <div className="text-xs font-bold text-indigo-100 uppercase tracking-widest">Calculated Rebate</div>
+              <div className="text-[11px] text-indigo-100 font-medium mt-0.5">{item.days}d × ₹{item.rate}/day</div>
+            </div>
+            <div className="text-3xl font-extrabold tracking-tight text-white">₹{item.amount.toLocaleString("en-IN")}</div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Admin Response Note</div>
+            <textarea 
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all min-h-[100px] resize-none"
+              placeholder="Provide a reason for approval or rejection (optional)…"
+              value={note}
+              onChange={e => setNote(e.target.value)}
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button className="flex-1 bg-emerald-600 text-white rounded-2xl py-4 font-bold text-sm shadow-xl shadow-emerald-600/20 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2" onClick={() => handleAction("approved")}>
+              <Icon.Check size={18} /> Approve Application
+            </button>
+            <button className="flex-1 bg-rose-600 text-white rounded-2xl py-4 font-bold text-sm shadow-xl shadow-rose-600/20 hover:bg-rose-700 transition-all flex items-center justify-center gap-2" onClick={() => handleAction("rejected")}>
+              <Icon.X size={18} /> Reject Application
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoItem({ label, val }) {
+  return (
+    <div className="space-y-1">
+      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</div>
+      <div className="text-sm font-bold text-slate-800">{val}</div>
+    </div>
   );
 }
