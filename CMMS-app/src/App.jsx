@@ -18,6 +18,7 @@ import AdminExtrasManagement from './pages/AdminExtrasManagement';
 import AdminFeedbackPage from './pages/AdminFeedbackPage';
 import AdminRebatePage from './pages/AdminRebatePage';
 import AdminMenuManagement from './pages/AdminMenuManagement';
+import AdminNotificationPage from './pages/AdminNotificationPage';
 
 function App() {
   return (
@@ -97,6 +98,12 @@ function App() {
               <AdminFeedbackPage/>
             </AdminProtectedRoute>
           }/>
+
+          <Route path='/admin-notifications' element={
+            <AdminProtectedRoute>
+              <AdminNotificationPage />
+            </AdminProtectedRoute>
+          } />
 
           <Route path='/admin-rebate' element={
             <AdminProtectedRoute>

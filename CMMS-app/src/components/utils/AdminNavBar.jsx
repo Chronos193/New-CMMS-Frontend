@@ -52,6 +52,7 @@ export default function AdminNavBar({ profile, notifications: propNotifs, onOpen
         { name: "Billing Management", path: "/admin-billing", icon: ReceiptText },
         { name: "Extras Management", path: "/admin-extra-management", icon: ShoppingBag },
         { name: "Feedback", path: "/admin-feedback", icon: Star },
+        { name: "Notifications", path: "/admin-notifications", icon: Bell },
         { name: "Rebate Management", path: "/admin-rebate", icon: CalendarClock },
         { name: "Menu Management", path: "/admin-menu-management", icon: Sparkles },
     ];

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import AdminNavBar from '../components/utils/AdminNavBar';
-import { ReceiptText, ShoppingBag, Star, CalendarClock, Sparkles, Loader2 } from 'lucide-react';
+import { ReceiptText, ShoppingBag, Star, CalendarClock, Sparkles, Loader2, Bell } from 'lucide-react';
 import api from '../Api';
 
 export default function AdminDashboard() {
@@ -77,6 +77,14 @@ export default function AdminDashboard() {
             link: "/admin-rebate",
             color: "from-rose-500 to-orange-500",
             bgLight: "bg-rose-50"
+        },
+        {
+            title: "Send Notification",
+            desc: "Target messages to specific student(s) or broadcast to all students.",
+            icon: Bell,
+            link: "/admin-notifications",
+            color: "from-indigo-500 to-cyan-500",
+            bgLight: "bg-cyan-50"
         },
         {
             title: "Menu Management",
