@@ -1,18 +1,14 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 
 // ── Inline SVG Icons ───────────────────────────────────────────────────────
-const Icon = ({ children, size = 20, style = {} }) => (
+const Icon = ({ children, size = 20, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0, ...style }}>
+    className={`inline-block align-middle shrink-0 ${className}`}>
     {children}
   </svg>
 );
 const Icons = {
-  Menu: (p) => <Icon {...p}><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></Icon>,
-  Utensils: (p) => <Icon {...p}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" /></Icon>,
-  Bell: (p) => <Icon {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></Icon>,
-  User: (p) => <Icon {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></Icon>,
   Plus: (p) => <Icon {...p}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></Icon>,
   Minus: (p) => <Icon {...p}><line x1="5" y1="12" x2="19" y2="12" /></Icon>,
   Edit: (p) => <Icon {...p}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></Icon>,
@@ -20,36 +16,22 @@ const Icons = {
   X: (p) => <Icon {...p}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon>,
   Check: (p) => <Icon {...p}><polyline points="20 6 9 17 4 12" /></Icon>,
   Save: (p) => <Icon {...p}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></Icon>,
-  RefreshCw: (p) => <Icon {...p}><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></Icon>,
   Package: (p) => <Icon {...p}><line x1="16.5" y1="9.4" x2="7.5" y2="4.21" /><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></Icon>,
   AlertTriangle: (p) => <Icon {...p}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></Icon>,
   CheckCircle2: (p) => <Icon {...p}><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" /><path d="m9 12 2 2 4-4" /></Icon>,
   ShoppingBag: (p) => <Icon {...p}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></Icon>,
-  Hash: (p) => <Icon {...p}><line x1="4" y1="9" x2="20" y2="9" /><line x1="4" y1="15" x2="20" y2="15" /><line x1="10" y1="3" x2="8" y2="21" /><line x1="16" y1="3" x2="14" y2="21" /></Icon>,
   Activity: (p) => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></Icon>,
-  Eye: (p) => <Icon {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></Icon>
-};
-
-// ── Design tokens ──────────────────────────────────────────────────────────
-const T = {
-  accent: "#5b5ef4", accentL: "#ededfd", accentD: "#3b3ec2",
-  bg: "#f0f1fb", surface: "#fff", surface2: "#f7f7fd",
-  border: "#e5e6f7", text: "#1a1b3a", muted: "#7b7da8",
-  radius: 16, radiusSm: 10,
-  shadow: "0 2px 16px rgba(91,94,244,0.07)",
-  shadowMd: "0 4px 24px rgba(91,94,244,0.12)",
+  Eye: (p) => <Icon {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></Icon>,
 };
 
 import AdminNavBar from "../components/utils/AdminNavBar";
 import api from "../Api";
 
 // ── Reusable small components ──────────────────────────────────────────────
-function AiBtn({ color, hoverBg, title, onClick, disabled, children }) {
-  const [h, setH] = useState(false);
+function AiBtn({ hoverCls, title, onClick, disabled, children, colorCls }) {
   return (
     <button title={title} onClick={onClick} disabled={disabled}
-      onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
-      style={{ width: 32, height: 32, borderRadius: 8, border: `1.5px solid ${h && !disabled ? hoverBg : T.border}`, background: h && !disabled ? hoverBg : T.surface, color: h && !disabled ? "#fff" : disabled ? "#c5c7d8" : color, cursor: disabled ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .15s", opacity: disabled ? .5 : 1 }}>
+      className={`w-8 h-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none hover:text-white hover:border-transparent ${colorCls} ${hoverCls}`}>
       {children}
     </button>
   );
@@ -57,14 +39,15 @@ function AiBtn({ color, hoverBg, title, onClick, disabled, children }) {
 
 function StatCard({ label, value, sub, iconBg, iconColor, Ic }) {
   return (
-    <div style={{ background: T.surface, borderRadius: T.radiusSm, padding: "18px 20px", boxShadow: T.shadow, display: "flex", alignItems: "center", gap: 12 }}>
-      <div style={{ width: 42, height: 42, borderRadius: 12, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+    <div className="bg-white rounded-xl p-5 shadow-sm flex items-center gap-3 border border-slate-100">
+      <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: iconBg, color: iconColor }}>
         <Ic size={20} />
       </div>
       <div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: T.text, lineHeight: 1 }}>{value}</div>
-        {sub && <div style={{ fontSize: 11, color: T.muted, marginTop: 2 }}>{sub}</div>}
-        <div style={{ fontSize: 12, color: T.muted, fontWeight: 600, marginTop: 2 }}>{label}</div>
+        <div className="text-2xl font-extrabold text-slate-800 leading-none">{value}</div>
+        {sub && <div className="text-xs text-slate-400 mt-0.5">{sub}</div>}
+        <div className="text-xs text-slate-500 font-semibold mt-0.5">{label}</div>
       </div>
     </div>
   );
@@ -82,12 +65,12 @@ function StockStepper({ value, onChange }) {
     setEditing(false);
   };
 
+  const stockCls = value === 0 ? "text-red-500 bg-red-50" : value <= 3 ? "text-amber-500 bg-amber-50" : "text-green-500 bg-green-50";
+
   return (
-    <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+    <div className="inline-flex items-center gap-1.5">
       <button onClick={() => onChange(Math.max(0, value - 1))}
-        style={{ width: 28, height: 28, borderRadius: 7, border: `1.5px solid ${T.border}`, background: T.surface2, color: T.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, transition: "all .12s" }}
-        onMouseEnter={e => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#ef4444"; }}
-        onMouseLeave={e => { e.currentTarget.style.background = T.surface2; e.currentTarget.style.color = T.muted; }}>
+        className="w-7 h-7 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 flex items-center justify-center font-extrabold hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all">
         <Icons.Minus size={12} />
       </button>
 
@@ -95,23 +78,17 @@ function StockStepper({ value, onChange }) {
         <input autoFocus type="number" value={inputVal}
           onChange={e => setInputVal(e.target.value)}
           onBlur={commit} onKeyDown={e => e.key === "Enter" && commit()}
-          style={{ width: 52, textAlign: "center", padding: "3px 6px", border: `1.5px solid ${T.accent}`, borderRadius: 7, fontFamily: "inherit", fontSize: 14, fontWeight: 800, color: T.text, outline: "none", background: T.accentL }} />
+          className="w-12 text-center py-0.5 px-1.5 border border-indigo-400 rounded-lg text-sm font-extrabold text-slate-800 bg-indigo-50 outline-none" />
       ) : (
         <span onClick={() => { setInputVal(String(value)); setEditing(true); }}
           title="Click to type a value"
-          style={{
-            minWidth: 36, textAlign: "center", fontSize: 15, fontWeight: 800,
-            color: value === 0 ? "#ef4444" : value <= 3 ? "#f59e0b" : "#22c55e",
-            cursor: "pointer", padding: "3px 6px", borderRadius: 7, background: value === 0 ? "#fee2e2" : value <= 3 ? "#fef3c7" : "#dcfce7"
-          }}>
+          className={`min-w-9 text-center text-sm font-extrabold cursor-pointer px-1.5 py-0.5 rounded-lg ${stockCls}`}>
           {value}
         </span>
       )}
 
       <button onClick={() => onChange(value + 1)}
-        style={{ width: 28, height: 28, borderRadius: 7, border: `1.5px solid ${T.border}`, background: T.surface2, color: T.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, transition: "all .12s" }}
-        onMouseEnter={e => { e.currentTarget.style.background = "#dcfce7"; e.currentTarget.style.color = "#22c55e"; }}
-        onMouseLeave={e => { e.currentTarget.style.background = T.surface2; e.currentTarget.style.color = T.muted; }}>
+        className="w-7 h-7 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 flex items-center justify-center font-extrabold hover:bg-green-50 hover:text-green-500 hover:border-green-200 transition-all">
         <Icons.Plus size={12} />
       </button>
     </div>
@@ -139,82 +116,78 @@ function ItemModal({ initial, hallName, onSave, onCancel }) {
     onSave({ ...form, price: Number(form.price), stock: Number(form.stock) });
   };
 
-  const F = (label, key, type = "text", ph = "") => (
+  const Field = (label, key, type = "text", ph = "") => (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
+      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{label}</div>
       <input type={type} value={form[key]} placeholder={ph}
         onChange={e => { setForm(f => ({ ...f, [key]: e.target.value })); setErrors(er => ({ ...er, [key]: "" })); }}
-        style={{ width: "100%", padding: "10px 14px", border: `1.5px solid ${errors[key] ? "#ef4444" : T.border}`, borderRadius: T.radiusSm, fontFamily: "inherit", fontSize: 14, color: T.text, background: T.surface2, outline: "none" }} />
-      {errors[key] && <div style={{ fontSize: 11, color: "#ef4444", marginTop: 4, fontWeight: 600 }}>{errors[key]}</div>}
+        className={`w-full px-3.5 py-2.5 border rounded-xl text-sm text-slate-800 bg-slate-50 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all ${errors[key] ? "border-red-400" : "border-slate-200"}`} />
+      {errors[key] && <div className="text-xs text-red-500 mt-1 font-semibold">{errors[key]}</div>}
     </div>
   );
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(26,27,58,.45)", backdropFilter: "blur(4px)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center"
       onClick={e => e.target === e.currentTarget && onCancel()}>
-      <div style={{ background: T.surface, borderRadius: T.radius, padding: 32, width: 440, maxWidth: "95vw", boxShadow: T.shadowMd, animation: "slideUp .22s ease" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+      <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>{isEdit ? "Edit Item" : "Add New Item"}</div>
-            <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>{hallName}</div>
+            <div className="text-lg font-extrabold text-slate-800">{isEdit ? "Edit Item" : "Add New Item"}</div>
+            <div className="text-xs text-slate-400 mt-0.5">{hallName}</div>
           </div>
-          <button onClick={onCancel} style={{ background: "none", border: "none", cursor: "pointer", color: T.muted, width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button onClick={onCancel} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors">
             <Icons.X size={18} />
           </button>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 24 }}>
-          {F("Item Name", "name", "text", "e.g. Chicken Biryani")}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            {F("Price (₹)", "price", "number", "e.g. 80")}
-            {F("Stock Count", "stock", "number", "e.g. 10")}
+        <div className="flex flex-col gap-4 mb-6">
+          {Field("Item Name", "name", "text", "e.g. Chicken Biryani")}
+          <div className="grid grid-cols-2 gap-4">
+            {Field("Price (₹)", "price", "number", "e.g. 80")}
+            {Field("Stock Count", "stock", "number", "e.g. 10")}
           </div>
         </div>
 
         {/* Preview */}
-        <div style={{ background: T.surface2, border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <div className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 flex items-center justify-between mb-6">
           <div>
-            <div style={{ fontWeight: 700, fontSize: 14 }}>{form.name || "Item Name"}</div>
-            <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>Stock: {form.stock || "0"}</div>
+            <div className="font-bold text-sm text-slate-800">{form.name || "Item Name"}</div>
+            <div className="text-xs text-slate-400 mt-0.5">Stock: {form.stock || "0"}</div>
           </div>
-          <div style={{ fontWeight: 800, fontSize: 16, color: T.accent }}>₹{form.price || "0"}</div>
+          <div className="font-extrabold text-base text-indigo-600">₹{form.price || "0"}</div>
         </div>
 
-        <div style={{ display: "flex", gap: 10 }}>
-          <MBtn color={T.accent} onClick={handleSave}><Icons.Save size={15} /> {isEdit ? "Save Changes" : "Add Item"}</MBtn>
-          <MBtn color="#94a3b8" onClick={onCancel}><Icons.X size={15} /> Cancel</MBtn>
+        <div className="flex gap-3">
+          <button onClick={handleSave} className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-500/20">
+            <Icons.Save size={15} /> {isEdit ? "Save Changes" : "Add Item"}
+          </button>
+          <button onClick={onCancel} className="flex-1 py-3 rounded-xl bg-slate-200 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-300 transition-colors">
+            <Icons.X size={15} /> Cancel
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-
-
-function MBtn({ color, onClick, children }) {
-  const [h, setH] = useState(false);
-  return (
-    <button onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
-      style={{ flex: 1, padding: "11px 0", borderRadius: T.radiusSm, border: "none", background: color, color: "#fff", fontFamily: "inherit", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: h ? .88 : 1, transform: h ? "translateY(-1px)" : "none", transition: "all .15s" }}>
-      {children}
-    </button>
-  );
-}
-
 function DeleteConfirm({ item, onConfirm, onCancel }) {
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(26,27,58,.45)", backdropFilter: "blur(4px)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ background: T.surface, borderRadius: T.radius, padding: 32, width: 380, maxWidth: "95vw", boxShadow: T.shadowMd, animation: "slideUp .22s ease", textAlign: "center" }}>
-        <div style={{ width: 52, height: 52, background: "#fee2e2", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "#ef4444" }}>
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex items-center justify-center">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center animate-in fade-in slide-in-from-bottom-4 duration-200">
+        <div className="w-13 h-13 w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
           <Icons.AlertTriangle size={24} />
         </div>
-        <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Remove Item?</div>
-        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, lineHeight: 1.6 }}>
-          Remove <strong style={{ color: T.text }}>{item.name}</strong> from this hall's menu?
+        <div className="text-lg font-extrabold text-slate-800 mb-2">Remove Item?</div>
+        <div className="text-sm text-slate-500 mb-6 leading-relaxed">
+          Remove <strong className="text-slate-800">{item.name}</strong> from this hall's menu?
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <MBtn color="#ef4444" onClick={onConfirm}><Icons.Trash size={15} /> Remove</MBtn>
-          <MBtn color="#94a3b8" onClick={onCancel}><Icons.X size={15} /> Cancel</MBtn>
+        <div className="flex gap-3">
+          <button onClick={onConfirm} className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-600 transition-colors">
+            <Icons.Trash size={15} /> Remove
+          </button>
+          <button onClick={onCancel} className="flex-1 py-3 rounded-xl bg-slate-200 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-300 transition-colors">
+            <Icons.X size={15} /> Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -223,8 +196,11 @@ function DeleteConfirm({ item, onConfirm, onCancel }) {
 
 function Toast({ msg, show }) {
   return (
-    <div style={{ position: "fixed", bottom: 28, left: "50%", transform: show ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(80px)", background: T.text, color: "#fff", padding: "12px 22px", borderRadius: 50, fontSize: 14, fontWeight: 600, zIndex: 400, pointerEvents: "none", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 8, transition: "transform .3s cubic-bezier(.34,1.56,.64,1)" }}>
-      <Icons.CheckCircle2 size={16} /><span>{msg}</span>
+    <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] transition-all duration-300 transform ${show ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-90 pointer-events-none'}`}>
+      <div className="bg-slate-900/95 backdrop-blur-md text-white px-6 py-3 rounded-full text-sm font-bold flex items-center gap-2.5 shadow-2xl border border-white/10">
+        <span className="text-emerald-400"><Icons.CheckCircle2 size={16} /></span>
+        <span>{msg}</span>
+      </div>
     </div>
   );
 }
@@ -335,235 +311,205 @@ export default function AdminExtrasManagement() {
     }
   };
 
-
-
-  // ── Stock level color ──────────────────────────────────────────────────
-  const stockColor = (s) => s === 0 ? "#ef4444" : s <= 3 ? "#f59e0b" : "#22c55e";
-  const stockBg = (s) => s === 0 ? "#fee2e2" : s <= 3 ? "#fef3c7" : "#dcfce7";
+  // ── Stock level classes ────────────────────────────────────────────────
+  const stockCls = (s) => s === 0 ? "text-red-500 bg-red-50" : s <= 3 ? "text-amber-500 bg-amber-50" : "text-green-500 bg-green-50";
+  const stockDot = (s) => s === 0 ? "bg-red-500" : s <= 3 ? "bg-amber-500" : "bg-green-500";
   const stockLabel = (s) => s === 0 ? "Out of Stock" : s <= 3 ? "Low Stock" : "In Stock";
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-        @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
-        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
-        ::-webkit-scrollbar{width:6px;height:6px}
-        ::-webkit-scrollbar-track{background:#f0f1fb}
-        ::-webkit-scrollbar-thumb{background:#c7c8ee;border-radius:99px}
-      `}</style>
+    <div className="min-h-screen bg-[#f0f1fb] font-sans text-slate-800 pb-12">
+      {addOpen && <ItemModal hallName={activeHall} initial={null} onSave={addItem} onCancel={() => setAddOpen(false)} />}
+      {editItem && <ItemModal hallName={activeHall} initial={editItem} onSave={saveEdit} onCancel={() => setEditItem(null)} />}
+      {deleteItem && <DeleteConfirm item={deleteItem} onConfirm={deleteItemFn} onCancel={() => setDeleteItem(null)} />}
 
-      <div style={{ fontFamily: "'Manrope',sans-serif", background: T.bg, minHeight: "100vh", color: T.text }}>
+      <AdminNavBar profile={profile} />
 
-        {/* NAV */}
-        <AdminNavBar profile={profile} />
+      <main className="max-w-[1400px] mx-auto px-4 md:px-8 py-8">
 
-        <main style={{ padding: "32px 40px", maxWidth: 1400, margin: "0 auto" }}>
-
-          {/* Hero */}
-          <div style={{ background: T.surface, borderRadius: T.radius, padding: "28px 32px", display: "flex", alignItems: "center", gap: 20, boxShadow: T.shadow, marginBottom: 28 }}>
-            <div style={{ width: 52, height: 52, background: T.accentL, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", color: T.accent, flexShrink: 0 }}>
-              <Icons.ShoppingBag size={26} />
-            </div>
-            <div>
-              <h1 style={{ fontSize: 24, fontWeight: 800 }}>Extras Stock Management</h1>
-              <p style={{ color: T.muted, fontSize: 14, marginTop: 2, fontWeight: 500 }}>Control item availability and stock counts across all halls. Changes reflect instantly for students.</p>
-            </div>
-            {stats.outOfStock > 0 && (
-              <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, background: "#fee2e2", color: "#ef4444", padding: "8px 16px", borderRadius: 50, fontSize: 12, fontWeight: 700, border: "1px solid #fecaca", whiteSpace: "nowrap" }}>
-                <Icons.AlertTriangle size={14} /> {stats.outOfStock} item{stats.outOfStock > 1 ? "s" : ""} out of stock
-              </div>
-            )}
+        {/* Hero */}
+        <div className="bg-white rounded-2xl p-6 md:p-8 flex flex-wrap items-center gap-4 shadow-sm mb-7 border border-slate-100">
+          <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shrink-0">
+            <Icons.ShoppingBag size={26} />
           </div>
-
-          {/* Stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 28 }}>
-            <StatCard label="Total Items" value={stats.totalItems} iconBg={T.accentL} iconColor={T.accent} Ic={Icons.Package} />
-            <StatCard label="Out of Stock" value={stats.outOfStock} iconBg="#fee2e2" iconColor="#ef4444" Ic={Icons.AlertTriangle} />
-            <StatCard label="Low Stock (≤3)" value={stats.lowStock} iconBg="#fef3c7" iconColor="#f59e0b" Ic={Icons.Activity} />
-            <StatCard label="Total Orders" value={stats.totalOrders} sub="this session" iconBg="#dcfce7" iconColor="#22c55e" Ic={Icons.ShoppingBag} />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl md:text-2xl font-extrabold text-slate-800">Extras Stock Management</h1>
+            <p className="text-slate-400 text-sm font-medium mt-0.5">Control item availability and stock counts across all halls. Changes reflect instantly for students.</p>
           </div>
+          {stats.outOfStock > 0 && (
+            <div className="flex items-center gap-2 bg-red-50 text-red-500 px-4 py-2 rounded-full text-xs font-bold border border-red-100 whitespace-nowrap">
+              <Icons.AlertTriangle size={14} /> {stats.outOfStock} item{stats.outOfStock > 1 ? "s" : ""} out of stock
+            </div>
+          )}
+        </div>
 
-          {/* Two-column layout: left = hall+table, right = order feed */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20, alignItems: "start" }}>
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+          <StatCard label="Total Items"   value={stats.totalItems}  iconBg="#ededfd" iconColor="#5b5ef4" Ic={Icons.Package} />
+          <StatCard label="Out of Stock"  value={stats.outOfStock}  iconBg="#fee2e2" iconColor="#ef4444" Ic={Icons.AlertTriangle} />
+          <StatCard label="Low Stock (≤3)" value={stats.lowStock}   iconBg="#fef3c7" iconColor="#f59e0b" Ic={Icons.Activity} />
+          <StatCard label="Total Orders"  value={stats.totalOrders} sub="this session" iconBg="#dcfce7" iconColor="#22c55e" Ic={Icons.ShoppingBag} />
+        </div>
 
-            {/* LEFT — Hall tabs + Item table */}
-            <div>
-              {/* Hall tabs */}
-              <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-                {halls.map(h => {
-                  const hallItems = menus[h];
-                  const hasOOS = hallItems.some(i => i.stock === 0);
-                  const hasLow = hallItems.some(i => i.stock > 0 && i.stock <= 3);
-                  const active = h === activeHall;
-                  return (
-                    <button key={h} onClick={() => setActiveHall(h)}
-                      style={{ padding: "8px 16px", borderRadius: 50, border: `1.5px solid ${active ? T.accent : T.border}`, background: active ? T.accent : T.surface, color: active ? "#fff" : T.text, fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, transition: "all .15s", position: "relative" }}>
-                      {h}
-                      {/* status dot */}
-                      {(hasOOS || hasLow) && !active && (
-                        <span style={{ width: 7, height: 7, borderRadius: "50%", background: hasOOS ? "#ef4444" : "#f59e0b", display: "inline-block" }} />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5 items-start">
 
-              {/* Hall card */}
-              <div style={{ background: T.surface, borderRadius: T.radius, boxShadow: T.shadow, overflow: "hidden" }}>
+          {/* LEFT — Hall tabs + Item table */}
+          <div>
+            {/* Hall tabs — scrollable on mobile */}
+            <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
+              {halls.map(h => {
+                const hallItems = menus[h];
+                const hasOOS = hallItems.some(i => i.stock === 0);
+                const hasLow = hallItems.some(i => i.stock > 0 && i.stock <= 3);
+                const isActive = h === activeHall;
+                return (
+                  <button key={h} onClick={() => setActiveHall(h)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-bold whitespace-nowrap transition-all duration-150 ${
+                      isActive ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
+                    }`}>
+                    {h}
+                    {(hasOOS || hasLow) && !isActive && (
+                      <span className={`w-2 h-2 rounded-full inline-block ${hasOOS ? "bg-red-500" : "bg-amber-500"}`} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
-                {/* Card header */}
-                <div style={{ padding: "18px 24px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: 16 }}>{activeHall}</div>
-                    <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>{items.length} item{items.length !== 1 ? "s" : ""} · {items.filter(i => i.stock > 0).length} available</div>
-                  </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => setAddOpen(true)}
-                      style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: T.accent, color: "#fff", border: "none", borderRadius: T.radiusSm, fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 8px rgba(91,94,244,.25)" }}>
-                      <Icons.Plus size={14} /> Add Item
-                    </button>
-                  </div>
+            {/* Hall card */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+              {/* Card header */}
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
+                <div>
+                  <div className="font-extrabold text-base text-slate-800">{activeHall}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{items.length} item{items.length !== 1 ? "s" : ""} · {items.filter(i => i.stock > 0).length} available</div>
                 </div>
+                <button onClick={() => setAddOpen(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-500/20 hover:bg-indigo-700 transition-colors">
+                  <Icons.Plus size={14} /> Add Item
+                </button>
+              </div>
 
-                {/* Table */}
-                {items.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "60px 20px", color: T.muted, fontWeight: 600 }}>
-                    <div style={{ fontSize: 36, marginBottom: 12 }}>🥣</div>
-                    No items in {activeHall}. Add one to get started.
-                  </div>
-                ) : (
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead style={{ background: T.surface2 }}>
+              {/* Table */}
+              {items.length === 0 ? (
+                <div className="py-16 text-center text-slate-400 font-semibold">
+                  <div className="text-4xl mb-3">🥣</div>
+                  No items in {activeHall}. Add one to get started.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse min-w-[700px]">
+                    <thead className="bg-slate-50">
                       <tr>
                         {["#", "Item Name", "Price", "Stock Count", "Status", "Sold Today", "Actions"].map(h => (
-                          <th key={h} style={{ padding: "12px 18px", textAlign: "left", fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: ".1em", borderBottom: `1.5px solid ${T.border}` }}>{h}</th>
+                          <th key={h} className="px-5 py-3.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {items.map((item, i) => (
-                        <tr key={item.id} style={{ borderBottom: i === items.length - 1 ? "none" : `1px solid ${T.border}` }}>
-                          <td style={{ padding: "14px 18px", fontSize: 13, color: T.muted, fontWeight: 700 }}>{i + 1}</td>
-
-                          <td style={{ padding: "14px 18px" }}>
-                            <div style={{ fontWeight: 700, fontSize: 14 }}>{item.name}</div>
-                          </td>
-
-                          <td style={{ padding: "14px 18px" }}>
-                            <div style={{ fontWeight: 800, color: T.accent, fontSize: 14 }}>₹{item.price}</div>
-                          </td>
-
-                          {/* ── Live stock stepper ── */}
-                          <td style={{ padding: "14px 18px" }}>
+                        <tr key={item.id} className={`transition-colors hover:bg-slate-50/60 ${i < items.length - 1 ? "border-b border-slate-100" : ""}`}>
+                          <td className="px-5 py-4 text-xs font-bold text-slate-400">{i + 1}</td>
+                          <td className="px-5 py-4 font-bold text-sm text-slate-800">{item.name}</td>
+                          <td className="px-5 py-4 font-extrabold text-sm text-indigo-600">₹{item.price}</td>
+                          <td className="px-5 py-4">
                             <StockStepper value={item.stock} onChange={v => setStock(item.id, v)} />
                           </td>
-
-                          {/* Status pill */}
-                          <td style={{ padding: "14px 18px" }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 50, fontSize: 11, fontWeight: 700, background: stockBg(item.stock), color: stockColor(item.stock) }}>
-                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: stockColor(item.stock), flexShrink: 0 }} />
+                          <td className="px-5 py-4">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${stockCls(item.stock)}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${stockDot(item.stock)}`} />
                               {stockLabel(item.stock)}
                             </span>
                           </td>
-
-                          <td style={{ padding: "14px 18px" }}>
-                            <div style={{ fontWeight: 700, fontSize: 14 }}>{item.sold}</div>
-                            <div style={{ fontSize: 11, color: T.muted }}>orders</div>
+                          <td className="px-5 py-4">
+                            <div className="font-bold text-sm text-slate-800">{item.sold}</div>
+                            <div className="text-xs text-slate-400">orders</div>
                           </td>
-
-                          <td style={{ padding: "14px 18px" }}>
-                            <div style={{ display: "flex", gap: 6 }}>
-                              <AiBtn color="#f59e0b" hoverBg="#f59e0b" title="Edit item" onClick={() => setEditItem(item)}><Icons.Edit size={15} /></AiBtn>
-                              <AiBtn color="#ef4444" hoverBg="#ef4444" title="Remove item" onClick={() => setDeleteItem(item)}><Icons.Trash size={15} /></AiBtn>
+                          <td className="px-5 py-4">
+                            <div className="flex gap-1.5">
+                              <AiBtn colorCls="text-amber-500" hoverCls="hover:bg-amber-400" title="Edit item" onClick={() => setEditItem(item)}><Icons.Edit size={15} /></AiBtn>
+                              <AiBtn colorCls="text-red-500" hoverCls="hover:bg-red-500" title="Remove item" onClick={() => setDeleteItem(item)}><Icons.Trash size={15} /></AiBtn>
                             </div>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                )}
-
-                {/* Hall summary footer */}
-                {items.length > 0 && (
-                  <div style={{ padding: "12px 18px", background: T.surface2, borderTop: `1px solid ${T.border}`, display: "flex", gap: 20 }}>
-                    {[
-                      ["Total stock", items.reduce((a, i) => a + i.stock, 0) + " units", T.text],
-                      ["Out of stock", items.filter(i => i.stock === 0).length + " items", "#ef4444"],
-                      ["Low stock", items.filter(i => i.stock > 0 && i.stock <= 3).length + " items", "#f59e0b"],
-                      ["Sold today", items.reduce((a, i) => a + i.sold, 0) + " orders", "#22c55e"],
-                    ].map(([l, v, c]) => (
-                      <div key={l} style={{ fontSize: 12 }}>
-                        <span style={{ color: T.muted, fontWeight: 600 }}>{l}: </span>
-                        <span style={{ fontWeight: 800, color: c }}>{v}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* RIGHT — Live Order Feed */}
-            <div style={{ background: T.surface, borderRadius: T.radius, boxShadow: T.shadow, overflow: "hidden", position: "sticky", top: 80 }}>
-              <div style={{ padding: "18px 20px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 9, background: "#dcfce7", color: "#22c55e", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Icons.Activity size={16} />
                 </div>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 14 }}>Live Order Feed</div>
-                  <div style={{ fontSize: 11, color: T.muted }}>Student bookings, real-time</div>
-                </div>
-                {orders.length > 0 && (
-                  <span style={{ marginLeft: "auto", background: T.accent, color: "#fff", borderRadius: 50, fontSize: 11, fontWeight: 700, padding: "2px 8px" }}>{orders.length}</span>
-                )}
-              </div>
+              )}
 
-              <div style={{ maxHeight: 520, overflowY: "auto" }}>
-                {orders.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px 20px", color: T.muted }}>
-                    <div style={{ fontSize: 28, marginBottom: 8 }}>📋</div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>No orders yet</div>
-                    <div style={{ fontSize: 11, marginTop: 4 }}>Hit "Simulate Order" to test</div>
-                  </div>
-                ) : orders.map((o, i) => (
-                  <div key={o.id} style={{ padding: "12px 16px", borderBottom: `1px solid ${T.border}`, animation: "fadeIn .3s ease", background: i === 0 ? T.accentL + "88" : T.surface }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>{o.item}</div>
-                      <div style={{ fontWeight: 800, color: T.accent, fontSize: 13 }}>₹{o.price}</div>
+              {/* Hall summary footer */}
+              {items.length > 0 && (
+                <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-4">
+                  {[
+                    ["Total stock", items.reduce((a, i) => a + i.stock, 0) + " units", "text-slate-800"],
+                    ["Out of stock", items.filter(i => i.stock === 0).length + " items", "text-red-500"],
+                    ["Low stock", items.filter(i => i.stock > 0 && i.stock <= 3).length + " items", "text-amber-500"],
+                    ["Sold today", items.reduce((a, i) => a + i.sold, 0) + " orders", "text-green-500"],
+                  ].map(([l, v, c]) => (
+                    <div key={l} className="text-xs">
+                      <span className="text-slate-400 font-semibold">{l}: </span>
+                      <span className={`font-bold ${c}`}>{v}</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <div style={{ fontSize: 11, color: T.muted }}>
-                        <span style={{ fontWeight: 600, color: T.text }}>{o.student}</span> · {o.hall}
-                      </div>
-                      <div style={{ fontSize: 10, color: T.muted }}>{o.time}</div>
-                    </div>
-                    <div style={{ marginTop: 5, display: "inline-block", background: T.surface2, border: `1px solid ${T.border}`, borderRadius: 5, padding: "2px 7px", fontSize: 10, fontWeight: 700, color: T.muted, letterSpacing: ".05em" }}>
-                      {o.token}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {orders.length > 0 && (
-                <div style={{ padding: "12px 16px", borderTop: `1px solid ${T.border}`, textAlign: "center" }}>
-                  <button onClick={() => setOrders([])}
-                    style={{ background: "none", border: "none", color: T.muted, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-                    Clear feed
-                  </button>
+                  ))}
                 </div>
               )}
             </div>
           </div>
-        </main>
-      </div>
 
-      {/* Modals */}
-      {addOpen && <ItemModal hallName={activeHall} initial={null} onSave={addItem} onCancel={() => setAddOpen(false)} />}
-      {editItem && <ItemModal hallName={activeHall} initial={editItem} onSave={saveEdit} onCancel={() => setEditItem(null)} />}
-      {deleteItem && <DeleteConfirm item={deleteItem} onConfirm={deleteItemFn} onCancel={() => setDeleteItem(null)} />}
+          {/* RIGHT — Live Order Feed */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden lg:sticky lg:top-20">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-green-50 text-green-500 flex items-center justify-center">
+                <Icons.Activity size={16} />
+              </div>
+              <div>
+                <div className="font-extrabold text-sm text-slate-800">Live Order Feed</div>
+                <div className="text-xs text-slate-400">Student bookings, real-time</div>
+              </div>
+              {orders.length > 0 && (
+                <span className="ml-auto bg-indigo-600 text-white rounded-full text-xs font-bold px-2 py-0.5">{orders.length}</span>
+              )}
+            </div>
+
+            <div className="max-h-[520px] overflow-y-auto">
+              {orders.length === 0 ? (
+                <div className="py-10 px-5 text-center text-slate-400">
+                  <div className="text-3xl mb-2">📋</div>
+                  <div className="text-sm font-semibold">No orders yet</div>
+                </div>
+              ) : orders.map((o, i) => (
+                <div key={o.id} className={`px-4 py-3 border-b border-slate-50 ${i === 0 ? "bg-indigo-50/60" : ""}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="font-bold text-sm text-slate-800">{o.item}</div>
+                    <div className="font-extrabold text-sm text-indigo-600">₹{o.price}</div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-slate-400">
+                      <span className="font-semibold text-slate-700">{o.student}</span> · {o.hall}
+                    </div>
+                    <div className="text-[10px] text-slate-400">{o.time}</div>
+                  </div>
+                  <div className="mt-1 inline-block bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-[10px] font-bold text-slate-400 tracking-wide">
+                    {o.token}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {orders.length > 0 && (
+              <div className="px-4 py-3 border-t border-slate-100 text-center">
+                <button onClick={() => setOrders([])}
+                  className="text-xs text-slate-400 font-semibold hover:text-slate-600 transition-colors">
+                  Clear feed
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
 
       <Toast show={toast.show} msg={toast.msg} />
-    </>
+    </div>
   );
 }
