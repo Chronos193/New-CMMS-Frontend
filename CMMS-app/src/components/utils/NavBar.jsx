@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Bell, User, Utensils, LogOut, X, ChevronDown, Phone, Hash, Home, Building, Menu, SquarePen, CalendarClock, Sparkles, Star } from 'lucide-react';
+import { ShoppingCart, Bell, User, Utensils, LogOut, X, ChevronDown, Phone, Hash, Home, Building, Menu, SquarePen, CalendarClock, Sparkles, Star, CalendarCheck, ReceiptText, Wallet, MessageSquarePlus } from 'lucide-react';
 import { useCart } from '../CartPage/CartContext';
 import api from '../../Api';
 
@@ -67,17 +67,26 @@ export default function NavBar({ profile, notifications: propNotifs, onOpenNotif
                                 exit={{ opacity: 0, x: -10 }}
                                 className="absolute left-0 top-full mt-4 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50 py-2"
                             >
-                                <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <SquarePen className="w-5 h-5" /> Rebate
+                                <button onClick={() => {navigate('/first'); setShowMenu(false);}} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                                    <Home className="w-5 h-5" /> Home
                                 </button>
-                                <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <CalendarClock className="w-5 h-5" /> Mess menu
+                                <button onClick={() => {navigate('/menu'); setShowMenu(false);}} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                                    <CalendarCheck className="w-5 h-5" /> Daily Menu
                                 </button>
-                                <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <Sparkles className="w-5 h-5" /> Complaints
+                                <button onClick={() => {navigate('/extras'); setShowMenu(false);}} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                                    <Utensils className="w-5 h-5" /> Extra Meals
                                 </button>
-                                <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <Star className="w-5 h-5" /> Feedback
+                                <button onClick={() => {navigate('/rebate'); setShowMenu(false);}} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                                    <ReceiptText className="w-5 h-5" /> Rebates
+                                </button>
+                                <button onClick={() => {navigate('/my-bookings'); setShowMenu(false);}} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                                    <Wallet className="w-5 h-5" /> My Bookings
+                                </button>
+                                <button onClick={() => {navigate('/feedbacks'); setShowMenu(false);}} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                                    <MessageSquarePlus className="w-5 h-5" /> Feedbacks
+                                </button>
+                                <button onClick={() => {navigate('/billing'); setShowMenu(false);}} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                                    <Sparkles className="w-5 h-5" /> Billing
                                 </button>
                             </motion.div>
                         )}

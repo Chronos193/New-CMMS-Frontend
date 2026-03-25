@@ -87,10 +87,10 @@ export default function Dashboard() {
             bgLight: "bg-rose-50"
         },
         {
-            title: "My Account",
+            title: "My Bookings",
             desc: "Check your mess dues and billing.",
             icon: Wallet,
-            link: "/page-4",
+            link: "/my-bookings",
             color: "from-emerald-500 to-teal-500",
             bgLight: "bg-emerald-50"
         },
