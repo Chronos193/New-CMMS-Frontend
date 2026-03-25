@@ -161,7 +161,7 @@ export default function AdminFeedbackPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 font-['Manrope'] text-slate-900 pb-12">
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-indigo-100 selection:text-indigo-900 pb-12">
             <AdminNavBar profile={profile} notifications={notifications} onOpenNotifications={handleOpenNotifications} />
 
             <main className="max-w-[1320px] mx-auto px-4 md:px-10 py-8">

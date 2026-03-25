@@ -3,10 +3,10 @@ import AdminNavBar from '../components/utils/AdminNavBar';
 import api from '../Api';
 
 // ── Inline SVG Icons ───────────────────────────────────────────────────────
-const Icon = ({ children, size = 20, style = {} }) => (
+const Icon = ({ children, size = 20, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    style={{ display:"inline-block", verticalAlign:"middle", flexShrink:0, ...style }}>
+    className={`inline-block align-middle shrink-0 ${className}`}>
     {children}
   </svg>
 );
@@ -32,90 +32,71 @@ const Icons = {
   Users:        (p) => <Icon {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>,
   Wallet:       (p) => <Icon {...p}><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></Icon>,
   FileSpreadsheet:(p)=><Icon {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="12" y1="13" x2="12" y2="17"/></Icon>,
-  Loader:       (p) => <Icon {...p}><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></Icon>,
+  Loader:       (p) => <Icon {...p} className="animate-spin"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></Icon>,
 };
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const STATUS_CFG = {
-  Unpaid:    { bg:"#fef3c7", color:"#f59e0b", Icon: Icons.Clock       },
-  Paid:      { bg:"#dcfce7", color:"#22c55e", Icon: Icons.CheckCircle },
-  Overdue:   { bg:"#fee2e2", color:"#ef4444", Icon: Icons.AlertCircle },
-  Waived:    { bg:"#ededfd", color:"#5b5ef4", Icon: Icons.CheckCircle2},
-};
-
-// ── Shared style tokens ────────────────────────────────────────────────────
-const T = {
-  accent:"#5b5ef4", accentL:"#ededfd", accentD:"#3b3ec2",
-  bg:"#f0f1fb", surface:"#fff", surface2:"#f7f7fd",
-  border:"#e5e6f7", text:"#1a1b3a", muted:"#7b7da8",
-  radius:16, radiusSm:10,
-  shadow:"0 2px 16px rgba(91,94,244,0.07)",
-  shadowMd:"0 4px 24px rgba(91,94,244,0.12)",
-};
-
-const sel = {
-  padding:"10px 32px 10px 14px", border:`1.5px solid ${T.border}`, borderRadius:T.radiusSm,
-  background:T.surface, fontFamily:"inherit", fontSize:14, color:T.text,
-  outline:"none", cursor:"pointer", appearance:"none",
-  backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237b7da8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")",
-  backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center",
+  Unpaid:  { cls: "bg-amber-50 text-amber-500",   Icon: Icons.Clock        },
+  Paid:    { cls: "bg-green-50 text-green-500",    Icon: Icons.CheckCircle  },
+  Overdue: { cls: "bg-red-50 text-red-500",        Icon: Icons.AlertCircle  },
+  Waived:  { cls: "bg-indigo-50 text-indigo-500",  Icon: Icons.CheckCircle2 },
 };
 
 // ── Small reusable ─────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
   const c = STATUS_CFG[status] || STATUS_CFG.Unpaid;
   return (
-    <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"5px 11px", borderRadius:50, fontSize:12, fontWeight:700, background:c.bg, color:c.color }}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${c.cls}`}>
       <c.Icon size={11} /> {status}
     </span>
   );
 }
 
-function AiBtn({ color, hoverBg, title, onClick, children }) {
-  const [h,setH]=useState(false);
+function AiBtn({ color, hoverColor, title, onClick, children }) {
   return (
     <button title={title} onClick={onClick}
-      onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
-      style={{ width:32, height:32, borderRadius:8, border:`1.5px solid ${h?hoverBg:T.border}`, background:h?hoverBg:T.surface, color:h?"#fff":color, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", transition:"all .15s" }}>
+      className={`w-8 h-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center transition-all duration-150 hover:text-white hover:border-transparent ${hoverColor}`}
+      style={{ color }}>
       {children}
     </button>
   );
 }
 
 function StatCard({ label, value, sub, iconBg, iconColor, Ic, onClick }) {
-  const [h,setH]=useState(false);
   return (
-    <div onClick={onClick} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
-      style={{ background:T.surface, borderRadius:T.radiusSm, padding:"20px 22px", boxShadow:h?T.shadowMd:T.shadow, display:"flex", alignItems:"center", gap:14, cursor:"pointer", transition:"transform .18s, box-shadow .18s", transform:h?"translateY(-2px)":"none" }}>
-      <div style={{ width:42, height:42, borderRadius:12, background:iconBg, color:iconColor, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+    <div onClick={onClick}
+      className="bg-white rounded-xl p-5 shadow-sm flex items-center gap-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md border border-slate-100">
+      <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: iconBg, color: iconColor }}>
         <Ic size={20} />
       </div>
       <div>
-        <div style={{ fontSize:22, fontWeight:800, color:T.text, lineHeight:1 }}>{value}</div>
-        {sub && <div style={{ fontSize:11, color:T.muted, fontWeight:500, marginTop:2 }}>{sub}</div>}
-        <div style={{ fontSize:12, color:T.muted, fontWeight:600, marginTop:sub?2:3 }}>{label}</div>
+        <div className="text-2xl font-extrabold text-slate-800 leading-none">{value}</div>
+        {sub && <div className="text-xs text-slate-400 font-medium mt-0.5">{sub}</div>}
+        <div className="text-xs text-slate-500 font-semibold mt-0.5">{label}</div>
       </div>
     </div>
   );
 }
 
 function PgBtn({ onClick, disabled, active, children }) {
-  const [h,setH]=useState(false);
-  const hi=active||h;
   return (
-    <button onClick={onClick} disabled={disabled} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
-      style={{ width:34, height:34, borderRadius:9, border:`1.5px solid ${hi?T.accent:T.border}`, background:hi?T.accent:T.surface, color:hi?"#fff":T.text, fontFamily:"inherit", fontSize:13, fontWeight:700, cursor:disabled?"not-allowed":"pointer", display:"flex", alignItems:"center", justifyContent:"center", opacity:disabled?.35:1, transition:"all .15s" }}>
+    <button onClick={onClick} disabled={disabled}
+      className={`w-9 h-9 rounded-xl border text-sm font-bold flex items-center justify-center transition-all disabled:opacity-30 disabled:pointer-events-none ${
+        active ? "bg-indigo-600 border-indigo-600 text-white shadow-md" : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:text-indigo-600"
+      }`}>
       {children}
     </button>
   );
 }
 
 function MoBtn({ color, onClick, children }) {
-  const [h,setH]=useState(false);
   return (
-    <button onClick={onClick} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
-      style={{ flex:1, padding:"11px 0", borderRadius:T.radiusSm, border:"none", background:color, color:"#fff", fontFamily:"inherit", fontSize:14, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6, opacity:h?.88:1, transform:h?"translateY(-1px)":"none", transition:"all .15s" }}>
+    <button onClick={onClick}
+      className="flex-1 py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all duration-150 hover:opacity-90 hover:-translate-y-px"
+      style={{ background: color }}>
       {children}
     </button>
   );
@@ -126,121 +107,108 @@ function BillModal({ student, selectedMonth, onClose, onUpdateStatus, onSendRemi
   const [note, setNote] = useState("");
   if (!student) return null;
 
-  const dueDate = selectedMonth ? `${selectedMonth} End` : "—";
-
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(26,27,58,.45)", backdropFilter:"blur(4px)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center" }}
-      onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{ background:T.surface, borderRadius:T.radius, padding:32, width:600, maxWidth:"95vw", maxHeight:"90vh", overflowY:"auto", boxShadow:T.shadowMd, animation:"slideUp .22s ease" }}>
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
         {/* Header */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:22 }}>
+        <div className="flex items-center justify-between p-6 pb-5 border-b border-slate-100">
           <div>
-            <div style={{ fontSize:18, fontWeight:800 }}>Bill Details</div>
-            <div style={{ fontSize:12, color:T.muted, fontWeight:500, marginTop:2 }}>{selectedMonth || "All Months"}</div>
+            <div className="text-lg font-extrabold text-slate-800">Bill Details</div>
+            <div className="text-xs text-slate-400 font-medium mt-0.5">{selectedMonth || "All Months"}</div>
           </div>
-          <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", color:T.muted, width:32, height:32, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors">
             <Icons.X size={18} />
           </button>
         </div>
 
-        {/* Student card */}
-        <div style={{ background:T.surface2, border:`1.5px solid ${T.border}`, borderRadius:T.radiusSm, padding:"16px 20px", display:"flex", alignItems:"center", gap:14, marginBottom:20 }}>
-          <div style={{ width:44, height:44, borderRadius:12, background:T.accent, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, fontWeight:800, flexShrink:0 }}>
-            {student.name[0]}
+        <div className="p-6 space-y-5">
+          {/* Student card */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg font-extrabold shrink-0">
+              {student.name[0]}
+            </div>
+            <div>
+              <div className="font-extrabold text-slate-800">{student.name}</div>
+              <div className="text-xs text-slate-400 mt-0.5">{student.roll_no} · {student.hall}</div>
+            </div>
+            <div className="ml-auto"><StatusBadge status={student.payStatus || "Unpaid"} /></div>
           </div>
+
+          {/* Bill breakdown */}
           <div>
-            <div style={{ fontWeight:800, fontSize:16 }}>{student.name}</div>
-            <div style={{ fontSize:12, color:T.muted, marginTop:2 }}>{student.roll_no} · {student.hall}</div>
-          </div>
-          <div style={{ marginLeft:"auto" }}><StatusBadge status={student.payStatus || "Unpaid"} /></div>
-        </div>
-
-        {/* Bill breakdown */}
-        <div style={{ marginBottom:20 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", marginBottom:12 }}>Bill Breakdown</div>
-          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 16px", background:T.surface2, borderRadius:T.radiusSm }}>
-              <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, color:T.muted }}>
-                <Icons.Calendar size={14}/> Fixed Charges
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Bill Breakdown</div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                <div className="flex items-center gap-2 text-sm text-slate-500"><Icons.Calendar size={14}/> Fixed Charges</div>
+                <div className="font-extrabold text-sm text-slate-800">₹{student.fixed_charges?.toLocaleString("en-IN") || 0}</div>
               </div>
-              <div style={{ fontWeight:800, fontSize:14 }}>₹{student.fixed_charges?.toLocaleString("en-IN") || 0}</div>
-            </div>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 16px", background:T.surface2, borderRadius:T.radiusSm }}>
-              <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, color:T.muted }}>
-                <Icons.Coffee size={14}/> Extras Total
-                <span style={{ fontSize:11 }}>({student.extras?.length || 0} items)</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                <div className="flex items-center gap-2 text-sm text-slate-500"><Icons.Coffee size={14}/> Extras Total <span className="text-xs">({student.extras?.length || 0} items)</span></div>
+                <div className="font-extrabold text-sm text-slate-800">₹{student.total_extras?.toLocaleString("en-IN") || 0}</div>
               </div>
-              <div style={{ fontWeight:800, fontSize:14 }}>₹{student.total_extras?.toLocaleString("en-IN") || 0}</div>
-            </div>
-            {student.rebate_refund > 0 && (
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 16px", background:"#dcfce7", borderRadius:T.radiusSm }}>
-                <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, color:"#22c55e" }}>
-                  <Icons.CheckCircle size={14}/> Rebate Refund
-                  <span style={{ fontSize:11 }}>({student.rebate_days}d × ₹{student.daily_refund_rate})</span>
+              {student.rebate_refund > 0 && (
+                <div className="flex justify-between items-center p-3 bg-green-50 rounded-xl">
+                  <div className="flex items-center gap-2 text-sm text-green-600"><Icons.CheckCircle size={14}/> Rebate Refund <span className="text-xs">({student.rebate_days}d × ₹{student.daily_refund_rate})</span></div>
+                  <div className="font-extrabold text-sm text-green-600">−₹{student.rebate_refund?.toLocaleString("en-IN") || 0}</div>
                 </div>
-                <div style={{ fontWeight:800, fontSize:14, color:"#22c55e" }}>−₹{student.rebate_refund?.toLocaleString("en-IN") || 0}</div>
+              )}
+              <div className="flex justify-between items-center p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+                <div className="text-sm font-bold text-indigo-600">Grand Total</div>
+                <div className="text-xl font-extrabold text-indigo-600">₹{student.grand_total?.toLocaleString("en-IN") || 0}</div>
               </div>
-            )}
-            {/* Grand total */}
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 16px", background:T.accentL, borderRadius:T.radiusSm, border:`1.5px solid ${T.accent}22` }}>
-              <div style={{ fontSize:14, fontWeight:700, color:T.accent }}>Grand Total</div>
-              <div style={{ fontSize:20, fontWeight:800, color:T.accent }}>₹{student.grand_total?.toLocaleString("en-IN") || 0}</div>
             </div>
           </div>
-        </div>
 
-        {/* Extras table */}
-        {student.extras?.length > 0 && (
-          <div style={{ marginBottom:20 }}>
-            <div style={{ fontSize:11, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", marginBottom:12 }}>Extras Transaction History</div>
-            <div style={{ background:T.surface2, border:`1px solid ${T.border}`, borderRadius:T.radiusSm, overflow:"hidden" }}>
-              <table style={{ width:"100%", borderCollapse:"collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom:`1px solid ${T.border}` }}>
-                    {["Date","Item","Hall","Amount"].map(h=>(
-                      <th key={h} style={{ padding:"10px 14px", textAlign:"left", fontSize:10, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".08em" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {student.extras.map((e,i)=>(
-                    <tr key={i} style={{ borderTop:`1px solid ${T.border}` }}>
-                      <td style={{ padding:"10px 14px", fontSize:13, color:T.muted, fontWeight:600 }}>{e.date}</td>
-                      <td style={{ padding:"10px 14px", fontSize:13, fontWeight:700 }}>{e.item_name}</td>
-                      <td style={{ padding:"10px 14px" }}><span style={{ fontSize:11, fontWeight:700, background:T.accentL, color:T.accent, padding:"2px 8px", borderRadius:5 }}>{e.hall}</span></td>
-                      <td style={{ padding:"10px 14px", fontSize:13, fontWeight:800, textAlign:"right" }}>₹{e.total_cost}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Extras table */}
+          {student.extras?.length > 0 && (
+            <div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Extras Transaction History</div>
+              <div className="bg-slate-50 border border-slate-100 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse min-w-[380px]">
+                    <thead>
+                      <tr className="border-b border-slate-200">
+                        {["Date","Item","Hall","Amount"].map(h => (
+                          <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {student.extras.map((e,i) => (
+                        <tr key={i} className="border-t border-slate-100">
+                          <td className="px-4 py-2.5 text-xs text-slate-400 font-semibold">{e.date}</td>
+                          <td className="px-4 py-2.5 text-xs font-bold text-slate-700">{e.item_name}</td>
+                          <td className="px-4 py-2.5"><span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded">{e.hall}</span></td>
+                          <td className="px-4 py-2.5 text-xs font-extrabold text-right text-slate-800">₹{e.total_cost}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Admin note */}
-        <div style={{ marginBottom:20 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", marginBottom:6 }}>Admin Note</div>
-          <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Add a note or reason (optional)…"
-            style={{ width:"100%", padding:"10px 14px", border:`1.5px solid ${T.border}`, borderRadius:T.radiusSm, fontFamily:"inherit", fontSize:14, color:T.text, background:T.surface2, outline:"none", resize:"vertical", minHeight:64 }} />
-        </div>
-
-        {/* Actions */}
-        <div style={{ display:"flex", gap:10 }}>
-          <MoBtn color={T.accent} onClick={async () => {
-            await onSendReminder(student.id, note);
-            onClose();
-          }}>
-            <Icons.Send size={15}/> Send Reminder
-          </MoBtn>
-          {student.payStatus !== "Paid" && (
-            <MoBtn color="#22c55e" onClick={async () => {
-              await onUpdateStatus(student.id, 'paid', note);
-              onClose();
-            }}>
-              <Icons.Check size={15}/> Mark as Paid
-            </MoBtn>
           )}
+
+          {/* Admin note */}
+          <div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Admin Note</div>
+            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Add a note or reason (optional)…"
+              className="w-full p-3 border border-slate-200 rounded-xl text-sm text-slate-700 bg-slate-50 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 resize-y min-h-[64px] transition-all" />
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            <MoBtn color="#5b5ef4" onClick={async () => { await onSendReminder(student.id, note); onClose(); }}>
+              <Icons.Send size={15}/> Send Reminder
+            </MoBtn>
+            {student.payStatus !== "Paid" && (
+              <MoBtn color="#22c55e" onClick={async () => { await onUpdateStatus(student.id, 'paid', note); onClose(); }}>
+                <Icons.Check size={15}/> Mark as Paid
+              </MoBtn>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -250,8 +218,11 @@ function BillModal({ student, selectedMonth, onClose, onUpdateStatus, onSendRemi
 // ── Toast ──────────────────────────────────────────────────────────────────
 function Toast({ msg, show }) {
   return (
-    <div style={{ position:"fixed", bottom:28, left:"50%", transform:show?"translateX(-50%) translateY(0)":"translateX(-50%) translateY(80px)", background:T.text, color:"#fff", padding:"12px 22px", borderRadius:50, fontSize:14, fontWeight:600, zIndex:300, pointerEvents:"none", whiteSpace:"nowrap", display:"flex", alignItems:"center", gap:8, transition:"transform .3s cubic-bezier(.34,1.56,.64,1)" }}>
-      <Icons.CheckCircle2 size={16}/><span>{msg}</span>
+    <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] transition-all duration-300 transform whitespace-nowrap flex items-center gap-2.5 ${show ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-90 pointer-events-none'}`}>
+      <div className="bg-slate-900/95 backdrop-blur-md text-white px-6 py-3 rounded-full text-sm font-bold flex items-center gap-2 shadow-2xl border border-white/10">
+        <span className="text-emerald-400"><Icons.CheckCircle2 size={16}/></span>
+        <span>{msg}</span>
+      </div>
     </div>
   );
 }
@@ -296,7 +267,6 @@ export default function AdminBillingPage() {
       try {
         const params = selectedMonth ? { month: selectedMonth } : {};
         const res = await api.get('/api/admin/billing/', { params });
-        // Map backend data to local format with payStatus defaulting to "Unpaid"
         const mapped = (res.data || []).map(s => ({
           ...s,
           payStatus: s.payStatus || "Unpaid",
@@ -355,7 +325,6 @@ export default function AdminBillingPage() {
         status: newStatus,
         note: note
       });
-      // Update local state
       setStudents(prev=>prev.map(x=>x.id===id?{...x, payStatus: res.data.payStatus, paid_on: res.data.paid_on}:x));
       const s = students.find(x=>x.id===id);
       showToast(`${s?.name} marked as ${newStatus}`);
@@ -380,149 +349,124 @@ export default function AdminBillingPage() {
   };
 
   const halls = [...new Set(students.map(s=>s.hall).filter(Boolean))].sort();
+  const selectCls = "appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 pr-10 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all cursor-pointer shadow-sm";
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-        .admin-billing-page{font-family:'Manrope',sans-serif;}
-        @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
-        .admin-billing-page tbody tr:hover td{background:#f7f7fd;}
-        .admin-billing-page input:focus,.admin-billing-page select:focus,.admin-billing-page textarea:focus{border-color:#5b5ef4!important;}
-        ::-webkit-scrollbar{width:6px;height:6px}
-        ::-webkit-scrollbar-track{background:#f0f1fb}
-        ::-webkit-scrollbar-thumb{background:#c7c8ee;border-radius:99px}
-        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-      `}</style>
+    <div className="min-h-screen bg-[#f0f1fb] font-sans text-slate-800 pb-12">
+      <AdminNavBar profile={profile} notifications={notifications} onOpenNotifications={handleOpenNotifications} />
 
-      <div className="admin-billing-page" style={{ fontFamily:"'Manrope',sans-serif", background:T.bg, minHeight:"100vh", color:T.text }}>
+      <main className="max-w-[1320px] mx-auto px-4 md:px-8 py-8">
 
-        {/* AdminNavBar */}
-        <AdminNavBar profile={profile} notifications={notifications} onOpenNotifications={handleOpenNotifications} />
-
-        <main style={{ padding:"32px 40px", maxWidth:1320, margin:"0 auto" }}>
-
-          {/* Hero */}
-          <div style={{ background:T.surface, borderRadius:T.radius, padding:"28px 32px", display:"flex", alignItems:"center", gap:20, boxShadow:T.shadow, marginBottom:28 }}>
-            <div style={{ width:52, height:52, background:T.accentL, borderRadius:14, display:"flex", alignItems:"center", justifyContent:"center", color:T.accent, flexShrink:0 }}>
-              <Icons.Receipt size={26}/>
-            </div>
-            <div>
-              <h1 style={{ fontSize:24, fontWeight:800 }}>Billing Management</h1>
-              <p style={{ color:T.muted, fontSize:14, marginTop:2, fontWeight:500 }}>
-                {selectedMonth} mess bills · Student billing overview
-              </p>
-            </div>
-            {/* outstanding alert pill */}
-            <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:8, background:"#fef3c7", color:"#f59e0b", padding:"8px 16px", borderRadius:50, fontSize:12, fontWeight:700, border:"1px solid #fde68a", whiteSpace:"nowrap" }}>
-              <Icons.AlertCircle size={14}/> Outstanding: ₹{stats.outstanding.toLocaleString("en-IN")}
-            </div>
+        {/* Hero */}
+        <div className="bg-white rounded-2xl p-6 md:p-8 flex flex-wrap items-center gap-4 shadow-sm mb-7 border border-slate-100">
+          <div className="w-13 h-13 w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shrink-0">
+            <Icons.Receipt size={26}/>
           </div>
-
-          {/* Stats */}
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:16, marginBottom:28 }}>
-            <StatCard label="Unpaid"    value={stats.unpaid}  iconBg="#fef3c7" iconColor="#f59e0b" Ic={Icons.Clock}        onClick={()=>{setStatusF("Unpaid"); setPage(1);}} />
-            <StatCard label="Paid"      value={stats.paid}    iconBg="#dcfce7" iconColor="#22c55e" Ic={Icons.CheckCircle}  onClick={()=>{setStatusF("Paid");   setPage(1);}} />
-            <StatCard label="Overdue"   value={stats.overdue} iconBg="#fee2e2" iconColor="#ef4444" Ic={Icons.AlertCircle}  onClick={()=>{setStatusF("Overdue");setPage(1);}} />
-            <StatCard label="Total Collected" value={"₹"+stats.total.toLocaleString("en-IN")} sub={`${stats.paid} students`} iconBg="#dcfce7" iconColor="#22c55e" Ic={Icons.Wallet}  onClick={()=>{setStatusF("Paid");setPage(1);}} />
-            <StatCard label="All Students"    value={students.length} sub={selectedMonth} iconBg={T.accentL} iconColor={T.accent} Ic={Icons.Users} onClick={()=>{setStatusF("");setPage(1);}} />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl md:text-2xl font-extrabold text-slate-800">Billing Management</h1>
+            <p className="text-slate-400 text-sm font-medium mt-0.5">{selectedMonth} mess bills · Student billing overview</p>
           </div>
-
-          {/* Toolbar */}
-          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20, flexWrap:"wrap" }}>
-            <div style={{ position:"relative", flex:1, minWidth:200 }}>
-              <div style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:T.muted, display:"flex", alignItems:"center", pointerEvents:"none" }}>
-                <Icons.Search size={15}/>
-              </div>
-              <input style={{ width:"100%", padding:"10px 14px 10px 38px", border:`1.5px solid ${T.border}`, borderRadius:T.radiusSm, background:T.surface, fontFamily:"inherit", fontSize:14, color:T.text, outline:"none" }}
-                placeholder="Search by name or roll no…" value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}}/>
-            </div>
-            <select style={sel} value={statusF} onChange={e=>{setStatusF(e.target.value);setPage(1);}}>
-              <option value="">All Statuses</option>
-              <option>Unpaid</option><option>Paid</option><option>Overdue</option><option>Waived</option>
-            </select>
-            <select style={sel} value={hallF} onChange={e=>{setHallF(e.target.value);setPage(1);}}>
-              <option value="">All Halls</option>
-              {halls.map(h=><option key={h}>{h}</option>)}
-            </select>
-            <select style={sel} value={selectedMonth} onChange={e=>{setSelectedMonth(e.target.value);setPage(1);}}>
-              {MONTHS.map(m=><option key={m}>{m}</option>)}
-            </select>
-
-            {/* CSV Export Button (placeholder — not implemented yet) */}
-            <div style={{ position:"relative" }}>
-              <button
-                onClick={()=>showToast("CSV export coming soon!")}
-                style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 18px", background:T.accent, color:"#fff", border:"none", borderRadius:T.radiusSm, fontFamily:"inherit", fontSize:13, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap", boxShadow:"0 2px 8px rgba(91,94,244,.25)", transition:"opacity .15s" }}
-                onMouseEnter={e=>e.currentTarget.style.opacity=".88"}
-                onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-                <Icons.FileSpreadsheet size={16}/> Export CSV
-                <Icons.ChevronDown size={14}/>
-              </button>
-            </div>
+          <div className="flex items-center gap-2 bg-amber-50 text-amber-500 px-4 py-2 rounded-full text-xs font-bold border border-amber-100 whitespace-nowrap">
+            <Icons.AlertCircle size={14}/> Outstanding: ₹{stats.outstanding.toLocaleString("en-IN")}
           </div>
+        </div>
 
-          {/* Table */}
-          <div style={{ background:T.surface, borderRadius:T.radius, boxShadow:T.shadow, overflow:"hidden" }}>
-            {loading ? (
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"80px 20px", gap:12 }}>
-                <Icons.Loader size={32} style={{ color:T.accent, animation:"spin 1s linear infinite" }}/>
-                <div style={{ fontSize:14, color:T.muted, fontWeight:600 }}>Loading billing data…</div>
-              </div>
-            ) : (
-              <table style={{ width:"100%", borderCollapse:"collapse" }}>
-                <thead style={{ background:T.surface2 }}>
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-7">
+          <StatCard label="Unpaid"    value={stats.unpaid}  iconBg="#fef3c7" iconColor="#f59e0b" Ic={Icons.Clock}        onClick={()=>{setStatusF("Unpaid"); setPage(1);}} />
+          <StatCard label="Paid"      value={stats.paid}    iconBg="#dcfce7" iconColor="#22c55e" Ic={Icons.CheckCircle}  onClick={()=>{setStatusF("Paid");   setPage(1);}} />
+          <StatCard label="Overdue"   value={stats.overdue} iconBg="#fee2e2" iconColor="#ef4444" Ic={Icons.AlertCircle}  onClick={()=>{setStatusF("Overdue");setPage(1);}} />
+          <StatCard label="Total Collected" value={"₹"+stats.total.toLocaleString("en-IN")} sub={`${stats.paid} students`} iconBg="#dcfce7" iconColor="#22c55e" Ic={Icons.Wallet}  onClick={()=>{setStatusF("Paid");setPage(1);}} />
+          <StatCard label="All Students"    value={students.length} sub={selectedMonth} iconBg="#ededfd" iconColor="#5b5ef4" Ic={Icons.Users} onClick={()=>{setStatusF("");setPage(1);}} />
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center gap-3 mb-5">
+          <div className="relative flex-1 min-w-[200px]">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+              <Icons.Search size={15}/>
+            </div>
+            <input className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm"
+              placeholder="Search by name or roll no…" value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}}/>
+          </div>
+          <select className={selectCls} value={statusF} onChange={e=>{setStatusF(e.target.value);setPage(1);}}>
+            <option value="">All Statuses</option>
+            <option>Unpaid</option><option>Paid</option><option>Overdue</option><option>Waived</option>
+          </select>
+          <select className={selectCls} value={hallF} onChange={e=>{setHallF(e.target.value);setPage(1);}}>
+            <option value="">All Halls</option>
+            {halls.map(h=><option key={h}>{h}</option>)}
+          </select>
+          <select className={selectCls} value={selectedMonth} onChange={e=>{setSelectedMonth(e.target.value);setPage(1);}}>
+            {MONTHS.map(m=><option key={m}>{m}</option>)}
+          </select>
+          <button
+            onClick={()=>showToast("CSV export coming soon!")}
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-500/20 hover:opacity-90 transition-opacity whitespace-nowrap">
+            <Icons.FileSpreadsheet size={16}/> Export CSV <Icons.ChevronDown size={14}/>
+          </button>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <Icons.Loader size={32} className="text-indigo-600"/>
+              <div className="text-sm text-slate-400 font-semibold">Loading billing data…</div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse min-w-[900px]">
+                <thead className="bg-slate-50/60">
                   <tr>
                     {["#","Student","Hall","Rebate Days","Fixed Charges","Extras","Grand Total","Status","Actions"].map(h=>(
-                      <th key={h} style={{ padding:"14px 18px", textAlign:"left", fontSize:11, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".1em", borderBottom:`1.5px solid ${T.border}` }}>{h}</th>
+                      <th key={h} className="px-5 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {slice.length===0 ? (
-                    <tr><td colSpan={9} style={{ textAlign:"center", padding:"60px 20px", color:T.muted, fontWeight:600 }}>
-                      <div style={{ display:"flex", justifyContent:"center", marginBottom:12, color:T.border }}><Icons.Inbox size={48}/></div>
+                    <tr><td colSpan={9} className="py-16 text-center text-slate-400 font-semibold">
+                      <div className="flex justify-center mb-3 text-slate-200"><Icons.Inbox size={48}/></div>
                       No billing records match your filters.
                     </td></tr>
                   ) : slice.map((s,i)=>(
-                    <tr key={s.id}>
-                      <td style={{ padding:"16px 18px", fontSize:13, color:T.muted, fontWeight:700, borderBottom:`1px solid ${T.border}` }}>{(safePg-1)*PER+i+1}</td>
-                      <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
-                        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                          <div style={{ width:34, height:34, borderRadius:10, background:T.accentL, color:T.accent, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, flexShrink:0 }}>{s.name?.[0] || "?"}</div>
+                    <tr key={s.id} className="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
+                      <td className="px-5 py-4 text-xs font-bold text-slate-400">{(safePg-1)*PER+i+1}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm font-extrabold shrink-0">{s.name?.[0] || "?"}</div>
                           <div>
-                            <div style={{ fontWeight:700, fontSize:14 }}>{s.name}</div>
-                            <div style={{ fontSize:12, color:T.muted, marginTop:1 }}>{s.roll_no}</div>
+                            <div className="font-bold text-sm text-slate-800">{s.name}</div>
+                            <div className="text-xs text-slate-400 mt-0.5">{s.roll_no}</div>
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
-                        <span style={{ fontSize:12, fontWeight:700, background:T.accentL, color:T.accent, padding:"4px 10px", borderRadius:6, letterSpacing:".06em" }}>{s.hall}</span>
+                      <td className="px-5 py-4">
+                        <span className="text-xs font-bold bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-lg tracking-wide">{s.hall}</span>
                       </td>
-                      <td style={{ padding:"16px 18px", fontSize:14, fontWeight:700, borderBottom:`1px solid ${T.border}` }}>
+                      <td className="px-5 py-4 text-sm font-bold text-slate-800">
                         {s.rebate_days > 0 ? (
-                          <><div style={{ color:"#22c55e" }}>{s.rebate_days} days</div>
-                          <div style={{ fontSize:11, color:T.muted, marginTop:1 }}>−₹{s.rebate_refund?.toLocaleString("en-IN")}</div></>
-                        ) : <span style={{ fontSize:12, color:T.muted }}>—</span>}
+                          <><div className="text-green-500">{s.rebate_days} days</div>
+                          <div className="text-xs text-slate-400 mt-0.5">−₹{s.rebate_refund?.toLocaleString("en-IN")}</div></>
+                        ) : <span className="text-xs text-slate-400">—</span>}
                       </td>
-                      <td style={{ padding:"16px 18px", fontSize:14, fontWeight:700, borderBottom:`1px solid ${T.border}` }}>₹{s.fixed_charges?.toLocaleString("en-IN") || 0}</td>
-                      <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
+                      <td className="px-5 py-4 text-sm font-bold text-slate-800">₹{s.fixed_charges?.toLocaleString("en-IN") || 0}</td>
+                      <td className="px-5 py-4">
                         {s.total_extras > 0
-                          ? <><div style={{ fontSize:14, fontWeight:700 }}>₹{s.total_extras?.toLocaleString("en-IN")}</div><div style={{ fontSize:11, color:T.muted }}>{s.extras?.length} item{s.extras?.length>1?"s":""}</div></>
-                          : <span style={{ fontSize:12, color:T.muted }}>—</span>}
+                          ? <><div className="text-sm font-bold text-slate-800">₹{s.total_extras?.toLocaleString("en-IN")}</div><div className="text-xs text-slate-400">{s.extras?.length} item{s.extras?.length>1?"s":""}</div></>
+                          : <span className="text-xs text-slate-400">—</span>}
                       </td>
-                      <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
-                        <div style={{ fontSize:15, fontWeight:800, color:T.text }}>₹{s.grand_total?.toLocaleString("en-IN") || 0}</div>
+                      <td className="px-5 py-4">
+                        <div className="text-base font-extrabold text-slate-800">₹{s.grand_total?.toLocaleString("en-IN") || 0}</div>
                       </td>
-                      <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
-                        <StatusBadge status={s.payStatus} />
-                      </td>
-                      <td style={{ padding:"16px 18px", borderBottom: i===slice.length-1?"none":`1px solid ${T.border}` }}>
-                        <div style={{ display:"flex", gap:6 }}>
-                          <AiBtn color={T.accent}   hoverBg={T.accent}   title="View full bill"  onClick={()=>setActiveId(s.id)}><Icons.Eye size={15}/></AiBtn>
-                          <AiBtn color="#475569"  hoverBg="#475569"  title="Send Reminder" onClick={()=>handleSendReminder(s.id)}><Icons.Send size={15}/></AiBtn>
+                      <td className="px-5 py-4"><StatusBadge status={s.payStatus} /></td>
+                      <td className="px-5 py-4">
+                        <div className="flex gap-1.5">
+                          <AiBtn color="#5b5ef4" hoverColor="hover:bg-indigo-600"  title="View full bill"  onClick={()=>setActiveId(s.id)}><Icons.Eye size={15}/></AiBtn>
+                          <AiBtn color="#475569" hoverColor="hover:bg-slate-600"   title="Send Reminder"  onClick={()=>handleSendReminder(s.id)}><Icons.Send size={15}/></AiBtn>
                           {s.payStatus !== "Paid" && (
-                            <AiBtn color="#22c55e"  hoverBg="#22c55e"  title="Mark as Paid" onClick={()=>handleMarkAs(s.id, 'paid')}><Icons.Check size={15}/></AiBtn>
+                            <AiBtn color="#22c55e" hoverColor="hover:bg-green-500" title="Mark as Paid"   onClick={()=>handleMarkAs(s.id, 'paid')}><Icons.Check size={15}/></AiBtn>
                           )}
                         </div>
                       </td>
@@ -530,27 +474,29 @@ export default function AdminBillingPage() {
                   ))}
                 </tbody>
               </table>
-            )}
+            </div>
+          )}
 
-            {!loading && pages>1 && (
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", gap:8, padding:"16px 18px", borderTop:`1px solid ${T.border}` }}>
-                <span style={{ fontSize:13, color:T.muted, fontWeight:600, marginRight:4 }}>Page {safePg} of {pages}</span>
+          {!loading && pages>1 && (
+            <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Page {safePg} of {pages}</span>
+              <div className="flex gap-1.5">
                 <PgBtn disabled={safePg===1}     onClick={()=>setPage(p=>p-1)}>‹</PgBtn>
                 {Array.from({length:pages},(_,i)=>i+1).map(p=><PgBtn key={p} active={p===safePg} onClick={()=>setPage(p)}>{p}</PgBtn>)}
                 <PgBtn disabled={safePg===pages} onClick={()=>setPage(p=>p+1)}>›</PgBtn>
               </div>
-            )}
-          </div>
-        </main>
+            </div>
+          )}
+        </div>
+      </main>
 
-        {activeId && active && (
-          <BillModal student={active} selectedMonth={selectedMonth} onClose={()=>setActiveId(null)} 
-            onUpdateStatus={handleMarkAs} 
-            onSendReminder={handleSendReminder}
-          />
-        )}
-        <Toast show={toast.show} msg={toast.msg}/>
-      </div>
-    </>
+      {activeId && active && (
+        <BillModal student={active} selectedMonth={selectedMonth} onClose={()=>setActiveId(null)}
+          onUpdateStatus={handleMarkAs}
+          onSendReminder={handleSendReminder}
+        />
+      )}
+      <Toast show={toast.show} msg={toast.msg}/>
+    </div>
   );
 }
