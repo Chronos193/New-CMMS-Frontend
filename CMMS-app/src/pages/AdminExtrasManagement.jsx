@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 
 // ── Inline SVG Icons ───────────────────────────────────────────────────────
 const Icon = ({ children, size = 20, style = {} }) => (
@@ -40,32 +40,8 @@ const T = {
   shadowMd: "0 4px 24px rgba(91,94,244,0.12)",
 };
 
-// ── Seed data — mirrors ExtrasPage.jsx hallMenus ───────────────────────────
-let _id = 1000;
-const mk = (name, price, stock) => ({ id: ++_id, name, price, stock, sold: 0 });
-
-const INITIAL_MENUS = {
-  "Hall 1": [mk("Veg Noodles", 40, 5), mk("Manchurian", 50, 10), mk("Masala Dosa", 35, 8)],
-  "Hall 2": [mk("Paneer Butter Masala", 80, 6), mk("Lassi", 20, 20), mk("Curd Rice", 30, 12)],
-  "Hall 3": [mk("Veg Fried Rice", 60, 7), mk("Samosa (2 pcs)", 10, 30), mk("Nimbu Pani", 10, 25)],
-  "Hall 4": [mk("Chicken Biryani", 120, 2), mk("Paneer Tikka", 80, 8), mk("Egg Biryani", 100, 5)],
-  "Hall 5": [mk("Cold Coffee", 30, 15), mk("Gulab Jamun", 15, 20)],
-  "Hall 6": [mk("Juice (Mixed Fruit)", 25, 18), mk("Chicken Roll", 55, 6)],
-  "Hall 7": [mk("Palak Paneer", 75, 4), mk("Curd (200ml)", 10, 30)],
-  "Hall 9": [mk("Fish Curry", 90, 3), mk("Mutton Curry", 130, 2)],
-  "Hall 13": [mk("Chicken Lollipop", 20, 15), mk("Chicken Noodles", 40, 10)],
-  "GH1": [mk("Pasta", 70, 15), mk("Pizza Slice", 60, 8)],
-};
-
-// ── Simulated order feed (student bookings) ────────────────────────────────
-const STUDENT_NAMES = ["Shubham", "Ananya", "Rohan", "Priya", "Aditya", "Kavya", "Rahul", "Sneha", "Varun", "Manya"];
-const mkOrder = (hallName, itemName, price) => ({
-  id: Math.random().toString(36).slice(2, 8).toUpperCase(),
-  student: STUDENT_NAMES[Math.floor(Math.random() * STUDENT_NAMES.length)],
-  hall: hallName, item: itemName, price,
-  time: new Date().toLocaleTimeString(),
-  token: "IITK-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
-});
+import AdminNavBar from "../components/utils/AdminNavBar";
+import api from "../Api";
 
 // ── Reusable small components ──────────────────────────────────────────────
 function AiBtn({ color, hoverBg, title, onClick, disabled, children }) {
@@ -213,39 +189,7 @@ function ItemModal({ initial, hallName, onSave, onCancel }) {
   );
 }
 
-// ── Restock All Modal ──────────────────────────────────────────────────────
-function RestockModal({ hall, items, onConfirm, onCancel }) {
-  const [counts, setCounts] = useState(Object.fromEntries(items.map(i => [i.id, i.stock])));
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(26,27,58,.45)", backdropFilter: "blur(4px)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}
-      onClick={e => e.target === e.currentTarget && onCancel()}>
-      <div style={{ background: T.surface, borderRadius: T.radius, padding: 32, width: 480, maxWidth: "95vw", maxHeight: "85vh", overflowY: "auto", boxShadow: T.shadowMd, animation: "slideUp .22s ease" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>Restock — {hall}</div>
-            <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>Set new stock counts for all items</div>
-          </div>
-          <button onClick={onCancel} style={{ background: "none", border: "none", cursor: "pointer", color: T.muted, width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}><Icons.X size={18} /></button>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
-          {items.map(item => (
-            <div key={item.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: T.surface2, border: `1px solid ${T.border}`, borderRadius: T.radiusSm, padding: "12px 16px" }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{item.name}</div>
-                <div style={{ fontSize: 12, color: T.muted, marginTop: 1 }}>₹{item.price} · Sold: {item.sold}</div>
-              </div>
-              <StockStepper value={counts[item.id]} onChange={v => setCounts(c => ({ ...c, [item.id]: v }))} />
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <MBtn color={T.accent} onClick={() => onConfirm(counts)}><Icons.RefreshCw size={15} /> Apply Restock</MBtn>
-          <MBtn color="#94a3b8" onClick={onCancel}><Icons.X size={15} /> Cancel</MBtn>
-        </div>
-      </div>
-    </div>
-  );
-}
+
 
 function MBtn({ color, onClick, children }) {
   const [h, setH] = useState(false);
@@ -287,14 +231,36 @@ function Toast({ msg, show }) {
 
 // ── Main Page ──────────────────────────────────────────────────────────────
 export default function AdminExtrasManagement() {
-  const [menus, setMenus] = useState(INITIAL_MENUS);
-  const [activeHall, setActiveHall] = useState("Hall 1");
+  const [menus, setMenus] = useState({});
+  const [orders, setOrders] = useState([]);
+  const [profile, setProfile] = useState(null);
+  const [activeHall, setActiveHall] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
-  const [restockOpen, setRestockOpen] = useState(false);
-  const [orders, setOrders] = useState([]);
   const [toast, setToast] = useState({ show: false, msg: "" });
+
+  const fetchDashboard = useCallback(async () => {
+    try {
+      const [dashRes, profileRes] = await Promise.all([
+        api.get('/api/admin/extras/dashboard/'),
+        api.get('/api/profile/')
+      ]);
+      setMenus(dashRes.data.menus);
+      setOrders(dashRes.data.orders);
+      setProfile(profileRes.data);
+      if (!activeHall && Object.keys(dashRes.data.menus).length > 0) {
+        setActiveHall(Object.keys(dashRes.data.menus)[0]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch extras dashboard:", err);
+      showToast("Error fetching data");
+    }
+  }, [activeHall]);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
 
   const showToast = useCallback(msg => {
     setToast({ show: true, msg });
@@ -316,46 +282,60 @@ export default function AdminExtrasManagement() {
   }, [menus]);
 
   // ── Item CRUD ──────────────────────────────────────────────────────────
-  const addItem = (form) => {
-    const newItem = { id: ++_id, name: form.name, price: form.price, stock: form.stock, sold: 0 };
-    setMenus(m => ({ ...m, [activeHall]: [...m[activeHall], newItem] }));
-    setAddOpen(false);
-    showToast(`"${form.name}" added to ${activeHall}`);
+  const addItem = async (form) => {
+    try {
+      await api.post('/api/admin/extras/items/', {
+        name: form.name,
+        price: form.price,
+        stock: form.stock,
+        hallName: activeHall
+      });
+      showToast(`"${form.name}" added to ${activeHall}`);
+      setAddOpen(false);
+      fetchDashboard();
+    } catch (err) {
+      showToast("Failed to add item");
+    }
   };
 
-  const saveEdit = (form) => {
-    setMenus(m => ({ ...m, [activeHall]: m[activeHall].map(i => i.id === editItem.id ? { ...i, name: form.name, price: form.price, stock: form.stock } : i) }));
-    setEditItem(null);
-    showToast(`"${form.name}" updated`);
+  const saveEdit = async (form) => {
+    try {
+      await api.put('/api/admin/extras/items/', {
+        id: editItem.id,
+        name: form.name,
+        price: form.price,
+        stock: form.stock
+      });
+      showToast(`"${form.name}" updated`);
+      setEditItem(null);
+      fetchDashboard();
+    } catch (err) {
+      showToast("Failed to update item");
+    }
   };
 
-  const deleteItemFn = () => {
-    setMenus(m => ({ ...m, [activeHall]: m[activeHall].filter(i => i.id !== deleteItem.id) }));
-    showToast(`"${deleteItem.name}" removed from ${activeHall}`);
-    setDeleteItem(null);
+  const deleteItemFn = async () => {
+    try {
+      await api.delete('/api/admin/extras/items/', { data: { id: deleteItem.id } });
+      showToast(`"${deleteItem.name}" removed from ${activeHall}`);
+      setDeleteItem(null);
+      fetchDashboard();
+    } catch (err) {
+      showToast("Failed to remove item");
+    }
   };
 
   // ── Stock controls ─────────────────────────────────────────────────────
-  const setStock = (itemId, newStock) => {
-    setMenus(m => ({ ...m, [activeHall]: m[activeHall].map(i => i.id === itemId ? { ...i, stock: newStock } : i) }));
+  const setStock = async (itemId, newStock) => {
+    try {
+      await api.put('/api/admin/extras/items/', { id: itemId, stock: newStock });
+      fetchDashboard();
+    } catch (err) {
+      showToast("Failed to update stock");
+    }
   };
 
-  const applyRestock = (counts) => {
-    setMenus(m => ({ ...m, [activeHall]: m[activeHall].map(i => ({ ...i, stock: counts[i.id] ?? i.stock })) }));
-    setRestockOpen(false);
-    showToast(`${activeHall} restocked successfully`);
-  };
 
-  // ── Simulate a student booking (demo button) ───────────────────────────
-  const simulateOrder = () => {
-    const available = items.filter(i => i.stock > 0);
-    if (!available.length) { showToast("All items are out of stock!"); return; }
-    const item = available[Math.floor(Math.random() * available.length)];
-    setMenus(m => ({ ...m, [activeHall]: m[activeHall].map(i => i.id === item.id ? { ...i, stock: i.stock - 1, sold: i.sold + 1 } : i) }));
-    const order = mkOrder(activeHall, item.name, item.price);
-    setOrders(prev => [order, ...prev].slice(0, 20));
-    showToast(`Student booked: ${item.name} — stock now ${item.stock - 1}`);
-  };
 
   // ── Stock level color ──────────────────────────────────────────────────
   const stockColor = (s) => s === 0 ? "#ef4444" : s <= 3 ? "#f59e0b" : "#22c55e";
@@ -366,8 +346,6 @@ export default function AdminExtrasManagement() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-        *{box-sizing:border-box;margin:0;padding:0;}
-        body{font-family:'Manrope',sans-serif;}
         @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
         input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
@@ -379,27 +357,7 @@ export default function AdminExtrasManagement() {
       <div style={{ fontFamily: "'Manrope',sans-serif", background: T.bg, minHeight: "100vh", color: T.text }}>
 
         {/* NAV */}
-        <nav style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", padding: "0 28px", height: 64, gap: 14, position: "sticky", top: 0, zIndex: 100 }}>
-          <div style={{ cursor: "pointer", color: T.muted, display: "flex" }}><Icons.Menu size={20} /></div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 38, height: 38, background: T.accent, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
-              <Icons.Utensils size={19} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 17, lineHeight: 1.1 }}>CMMS</div>
-              <div style={{ fontSize: 10, letterSpacing: ".12em", color: T.muted, fontWeight: 600, textTransform: "uppercase" }}>Centralized Mess Management</div>
-            </div>
-          </div>
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ position: "relative", cursor: "pointer", display: "flex", color: T.muted }}>
-              <Icons.Bell size={20} />
-              <div style={{ position: "absolute", top: 0, right: 0, width: 8, height: 8, background: "#ef4444", borderRadius: "50%", border: "2px solid #fff" }} />
-            </div>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.surface2, display: "flex", alignItems: "center", justifyContent: "center", color: T.muted, cursor: "pointer", border: `2px solid ${T.border}` }}>
-              <Icons.User size={18} />
-            </div>
-          </div>
-        </nav>
+        <AdminNavBar profile={profile} />
 
         <main style={{ padding: "32px 40px", maxWidth: 1400, margin: "0 auto" }}>
 
@@ -462,16 +420,6 @@ export default function AdminExtrasManagement() {
                     <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>{items.length} item{items.length !== 1 ? "s" : ""} · {items.filter(i => i.stock > 0).length} available</div>
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
-                    {/* Simulate student order */}
-                    <button onClick={simulateOrder}
-                      style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: T.surface2, color: T.muted, border: `1.5px solid ${T.border}`, borderRadius: T.radiusSm, fontFamily: "inherit", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-                      title="Simulate a student booking (demo)">
-                      <Icons.Eye size={14} /> Simulate Order
-                    </button>
-                    <button onClick={() => setRestockOpen(true)}
-                      style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "#dcfce7", color: "#16a34a", border: `1.5px solid #bbf7d0`, borderRadius: T.radiusSm, fontFamily: "inherit", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-                      <Icons.RefreshCw size={14} /> Restock All
-                    </button>
                     <button onClick={() => setAddOpen(true)}
                       style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: T.accent, color: "#fff", border: "none", borderRadius: T.radiusSm, fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 8px rgba(91,94,244,.25)" }}>
                       <Icons.Plus size={14} /> Add Item
@@ -614,7 +562,6 @@ export default function AdminExtrasManagement() {
       {addOpen && <ItemModal hallName={activeHall} initial={null} onSave={addItem} onCancel={() => setAddOpen(false)} />}
       {editItem && <ItemModal hallName={activeHall} initial={editItem} onSave={saveEdit} onCancel={() => setEditItem(null)} />}
       {deleteItem && <DeleteConfirm item={deleteItem} onConfirm={deleteItemFn} onCancel={() => setDeleteItem(null)} />}
-      {restockOpen && <RestockModal hall={activeHall} items={items} onConfirm={applyRestock} onCancel={() => setRestockOpen(false)} />}
 
       <Toast show={toast.show} msg={toast.msg} />
     </>

@@ -5,12 +5,14 @@ import FirstPage from './pages/FirstPage';
 import DailyMenu from './pages/DailyMenu';
 import ComplaintPage from "./pages/ComplaintPage";
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import ExtrasPage from './pages/ExtrasPage';
 import RebatePage from './pages/RebatePage';
 import BillingPage from './pages/BillingPage'
 import CartPage from './pages/CartPage';
 import MyBookings from './pages/MyBookings';
 import { CartProvider } from './components/CartPage/CartContext';
+import AdminDashboard from './pages/AdminDashboard';
 import AdminBillingPage from './pages/AdminBillingPage';
 import AdminExtrasManagement from './pages/AdminExtrasManagement';
 import AdminFeedbackPage from './pages/AdminFeedbackPage';
@@ -24,7 +26,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<AuthPage />} />
           
-          {/* Protected Routes */}
+          {/* Student Protected Routes */}
           <Route path="/first" element={
             <ProtectedRoute>
               <FirstPage />
@@ -59,7 +61,6 @@ function App() {
             </ProtectedRoute>
           }/>
 
-          
           <Route path='/cart' element={
             <ProtectedRoute>
               <CartPage/>
@@ -72,47 +73,46 @@ function App() {
             </ProtectedRoute>
           }/>
           
+          {/* Admin Protected Routes */}
+          <Route path='/admin-dashboard' element={
+            <AdminProtectedRoute>
+              <AdminDashboard/>
+            </AdminProtectedRoute>
+          }/>
+
           <Route path='/admin-billing' element={
-            <ProtectedRoute>
+            <AdminProtectedRoute>
               <AdminBillingPage/>
-            </ProtectedRoute>
+            </AdminProtectedRoute>
           }/>
 
           <Route path='/admin-extra-management' element={
-            <ProtectedRoute>
+            <AdminProtectedRoute>
               <AdminExtrasManagement/>
-            </ProtectedRoute>
+            </AdminProtectedRoute>
           }/>
 
           <Route path='/admin-feedback' element={
-            <ProtectedRoute>
+            <AdminProtectedRoute>
               <AdminFeedbackPage/>
-            </ProtectedRoute>
+            </AdminProtectedRoute>
           }/>
 
-
           <Route path='/admin-rebate' element={
-            <ProtectedRoute>
+            <AdminProtectedRoute>
               <AdminRebatePage/>
-            </ProtectedRoute>
+            </AdminProtectedRoute>
           }/>
 
           <Route path='/admin-menu-management' element={
-            <ProtectedRoute>
+            <AdminProtectedRoute>
               <AdminMenuManagement/>
-            </ProtectedRoute>
+            </AdminProtectedRoute>
           }/>
 
           {/* Public Routes */}
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<HomePage />} />
-
-          {/* Placeholder for future dashboard */}
-          <Route path="/dashboard" element={
-            <div className='flex justify-center items-center h-screen bg-gray-900 text-white'>
-              <h1 className='text-3xl font-bold'>Welcome to Dashboard!</h1>
-            </div>
-          } />
         </Routes>
       </CartProvider>
     </Router>

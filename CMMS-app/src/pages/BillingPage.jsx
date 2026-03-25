@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IndianRupee, Receipt, ArrowLeft, Info, Calendar, ShieldCheck, Coffee, Download, AlertCircle, Loader2 } from 'lucide-react';
+import { IndianRupee, Receipt, ArrowLeft, Info, Calendar, ShieldCheck, Coffee, Download, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
 import api from '../Api';
 import NavBar from '../components/utils/NavBar';
 
@@ -100,6 +100,10 @@ const BillingPage = () => {
   // Ensure the grand total doesn't go below 0 if rebate refund is very large
   const grandTotal = Math.max(0, currentBill.total_bill || 0);
 
+  // Payment status from backend
+  const paymentStatus = currentBill.payment_status || 'unpaid';
+  const paidOn = currentBill.paid_on;
+
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
@@ -156,9 +160,24 @@ const BillingPage = () => {
               </select>
             </div>
           </div>
-          <div className="bg-amber-100 text-amber-700 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-sm border border-amber-200">
-            <AlertCircle size={14} /> PAYMENT DUE: {dueDate}
-          </div>
+          {paymentStatus === 'paid' ? (
+            <div className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-sm border border-emerald-200">
+              <CheckCircle size={14} /> PAID
+              {paidOn && <span className="text-[10px] font-bold text-emerald-500 ml-1">· {new Date(paidOn).toLocaleDateString()}</span>}
+            </div>
+          ) : paymentStatus === 'overdue' ? (
+            <div className="bg-red-100 text-red-700 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-sm border border-red-200">
+              <AlertCircle size={14} /> OVERDUE
+            </div>
+          ) : paymentStatus === 'waived' ? (
+            <div className="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-sm border border-indigo-200">
+              <CheckCircle size={14} /> WAIVED
+            </div>
+          ) : (
+            <div className="bg-amber-100 text-amber-700 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-sm border border-amber-200">
+              <AlertCircle size={14} /> PAYMENT DUE: {dueDate}
+            </div>
+          )}
         </div>
 
         {/* STUDENT PROFILE & ATTENDANCE SUMMARY - HIGH PRECISION VERSION */}

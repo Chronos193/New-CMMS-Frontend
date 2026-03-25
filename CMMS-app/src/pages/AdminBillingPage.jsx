@@ -1,4 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import AdminNavBar from '../components/utils/AdminNavBar';
+import api from '../Api';
 
 // ── Inline SVG Icons ───────────────────────────────────────────────────────
 const Icon = ({ children, size = 20, style = {} }) => (
@@ -10,10 +12,6 @@ const Icon = ({ children, size = 20, style = {} }) => (
 );
 
 const Icons = {
-  Menu:         (p) => <Icon {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>,
-  Utensils:     (p) => <Icon {...p}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></Icon>,
-  Bell:         (p) => <Icon {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></Icon>,
-  User:         (p) => <Icon {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>,
   Rupee:        (p) => <Icon {...p}><path d="M6 3h12"/><path d="M6 8h12"/><path d="M6 13l8.5 8"/><path d="M6 13h3a4 4 0 0 0 0-8"/></Icon>,
   Receipt:      (p) => <Icon {...p}><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="16" x2="12" y2="16"/></Icon>,
   Search:       (p) => <Icon {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Icon>,
@@ -34,14 +32,10 @@ const Icons = {
   Users:        (p) => <Icon {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>,
   Wallet:       (p) => <Icon {...p}><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></Icon>,
   FileSpreadsheet:(p)=><Icon {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="12" y1="13" x2="12" y2="17"/></Icon>,
+  Loader:       (p) => <Icon {...p}><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></Icon>,
 };
 
-// ── Constants ──────────────────────────────────────────────────────────────
-const BILL_MONTH = "March 2026";
-const DUE_DATE   = "April 10, 2026";
-const DAILY_RATE = 76; // ₹/day
-const TOTAL_DAYS = 31;
-const CLOSURE    = 2;
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const STATUS_CFG = {
   Unpaid:    { bg:"#fef3c7", color:"#f59e0b", Icon: Icons.Clock       },
@@ -49,27 +43,6 @@ const STATUS_CFG = {
   Overdue:   { bg:"#fee2e2", color:"#ef4444", Icon: Icons.AlertCircle },
   Waived:    { bg:"#ededfd", color:"#5b5ef4", Icon: Icons.CheckCircle2},
 };
-
-// ── Seed data ──────────────────────────────────────────────────────────────
-const seed = () => [
-  { id:1,  name:"Kavita Kumari",         roll:"230552", hall:"H6", rebateDays:5, extras:[{date:"2026-03-18",item:"Chicken Noodles",hall:"Hall 1",price:40},{date:"2026-03-15",item:"Chicken Biryani",hall:"Hall 4",price:120},{date:"2026-03-12",item:"Chicken Lollipop",hall:"Hall 13",price:20}], payStatus:"Unpaid",  paidOn:"" },
-  { id:2,  name:"Shubham Kumar Pandey",  roll:"220850", hall:"H5", rebateDays:7, extras:[{date:"2026-03-20",item:"Paneer Butter Masala",hall:"Hall 2",price:80},{date:"2026-03-10",item:"Cold Coffee",hall:"Hall 6",price:30}], payStatus:"Paid",    paidOn:"2026-03-28" },
-  { id:3,  name:"Ananya Sharma",         roll:"220123", hall:"H2", rebateDays:6, extras:[{date:"2026-03-22",item:"Veg Fried Rice",hall:"Hall 3",price:60}], payStatus:"Overdue", paidOn:"" },
-  { id:4,  name:"Rohan Verma",           roll:"210456", hall:"H7", rebateDays:4, extras:[], payStatus:"Paid",    paidOn:"2026-03-25" },
-  { id:5,  name:"Priya Nair",            roll:"220789", hall:"H4", rebateDays:7, extras:[{date:"2026-03-14",item:"Fish Curry",hall:"Hall 9",price:90},{date:"2026-03-08",item:"Lassi",hall:"Hall 2",price:20}], payStatus:"Unpaid",  paidOn:"" },
-  { id:6,  name:"Aditya Singh",          roll:"210987", hall:"H5", rebateDays:5, extras:[{date:"2026-03-19",item:"Egg Biryani",hall:"Hall 4",price:100}], payStatus:"Overdue", paidOn:"" },
-  { id:7,  name:"Kavya Menon",           roll:"220654", hall:"H2", rebateDays:8, extras:[{date:"2026-03-05",item:"Masala Dosa",hall:"Hall 1",price:35}], payStatus:"Paid",    paidOn:"2026-03-30" },
-  { id:8,  name:"Rahul Gupta",           roll:"210321", hall:"H7", rebateDays:5, extras:[], payStatus:"Waived",  paidOn:"" },
-  { id:9,  name:"Sneha Patel",           roll:"220543", hall:"H4", rebateDays:2, extras:[{date:"2026-03-17",item:"Chicken Roll",hall:"Hall 13",price:55},{date:"2026-03-11",item:"Juice",hall:"Hall 6",price:25}], payStatus:"Unpaid",  paidOn:"" },
-  { id:10, name:"Varun Joshi",           roll:"210765", hall:"H5", rebateDays:7, extras:[{date:"2026-03-21",item:"Mutton Curry",hall:"Hall 9",price:130}], payStatus:"Paid",    paidOn:"2026-03-27" },
-  { id:11, name:"Manya Agarwal",         roll:"220198", hall:"H2", rebateDays:5, extras:[], payStatus:"Overdue", paidOn:"" },
-  { id:12, name:"Deepak Chauhan",        roll:"210876", hall:"H7", rebateDays:3, extras:[{date:"2026-03-16",item:"Paneer Tikka",hall:"Hall 4",price:70}], payStatus:"Unpaid",  paidOn:"" },
-].map(s => {
-  const billable = TOTAL_DAYS - CLOSURE - s.rebateDays;
-  const basic    = billable * DAILY_RATE;
-  const totalExtras = s.extras.reduce((acc,e)=>acc+e.price,0);
-  return { ...s, billable, basic, totalExtras, grand: basic + totalExtras };
-});
 
 // ── Shared style tokens ────────────────────────────────────────────────────
 const T = {
@@ -149,16 +122,11 @@ function MoBtn({ color, onClick, children }) {
 }
 
 // ── Bill Detail Modal ──────────────────────────────────────────────────────
-function BillModal({ student, onClose, onUpdateStatus }) {
+function BillModal({ student, selectedMonth, onClose, onUpdateStatus, onSendReminder }) {
   const [note, setNote] = useState("");
   if (!student) return null;
 
-  const InfoRow = ({ label, val, color }) => (
-    <div>
-      <div style={{ fontSize:11, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", marginBottom:5 }}>{label}</div>
-      <div style={{ fontSize:14, fontWeight:600, color: color||T.text }}>{val}</div>
-    </div>
-  );
+  const dueDate = selectedMonth ? `${selectedMonth} End` : "—";
 
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(26,27,58,.45)", backdropFilter:"blur(4px)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center" }}
@@ -169,7 +137,7 @@ function BillModal({ student, onClose, onUpdateStatus }) {
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:22 }}>
           <div>
             <div style={{ fontSize:18, fontWeight:800 }}>Bill Details</div>
-            <div style={{ fontSize:12, color:T.muted, fontWeight:500, marginTop:2 }}>{BILL_MONTH} · Due {DUE_DATE}</div>
+            <div style={{ fontSize:12, color:T.muted, fontWeight:500, marginTop:2 }}>{selectedMonth || "All Months"}</div>
           </div>
           <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", color:T.muted, width:32, height:32, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center" }}>
             <Icons.X size={18} />
@@ -183,27 +151,10 @@ function BillModal({ student, onClose, onUpdateStatus }) {
           </div>
           <div>
             <div style={{ fontWeight:800, fontSize:16 }}>{student.name}</div>
-            <div style={{ fontSize:12, color:T.muted, marginTop:2 }}>{student.roll} · {student.hall}</div>
+            <div style={{ fontSize:12, color:T.muted, marginTop:2 }}>{student.roll_no} · {student.hall}</div>
           </div>
-          <div style={{ marginLeft:"auto" }}><StatusBadge status={student.payStatus} /></div>
+          <div style={{ marginLeft:"auto" }}><StatusBadge status={student.payStatus || "Unpaid"} /></div>
         </div>
-
-        {/* Attendance breakdown */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:20 }}>
-          {[
-            ["Month Days", TOTAL_DAYS, T.text],
-            ["Mess Closed", CLOSURE, "#f59e0b"],
-            ["Rebate Days", "-"+student.rebateDays, "#22c55e"],
-            ["Net Billable", student.billable+" days", T.accent],
-          ].map(([l,v,c])=>(
-            <div key={l} style={{ background:T.surface2, borderRadius:T.radiusSm, padding:"12px 14px", textAlign:"center" }}>
-              <div style={{ fontSize:10, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".1em", marginBottom:5 }}>{l}</div>
-              <div style={{ fontSize:18, fontWeight:800, color:c }}>{v}</div>
-            </div>
-          ))}
-        </div>
-
-        <hr style={{ border:"none", borderTop:`1px solid ${T.border}`, margin:"0 0 20px" }} />
 
         {/* Bill breakdown */}
         <div style={{ marginBottom:20 }}>
@@ -211,28 +162,36 @@ function BillModal({ student, onClose, onUpdateStatus }) {
           <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 16px", background:T.surface2, borderRadius:T.radiusSm }}>
               <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, color:T.muted }}>
-                <Icons.Calendar size={14}/> Basic Mess Bill
-                <span style={{ fontSize:11, color:T.muted }}>({student.billable}d × ₹{DAILY_RATE})</span>
+                <Icons.Calendar size={14}/> Fixed Charges
               </div>
-              <div style={{ fontWeight:800, fontSize:14 }}>₹{student.basic.toLocaleString("en-IN")}</div>
+              <div style={{ fontWeight:800, fontSize:14 }}>₹{student.fixed_charges?.toLocaleString("en-IN") || 0}</div>
             </div>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 16px", background:T.surface2, borderRadius:T.radiusSm }}>
               <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, color:T.muted }}>
                 <Icons.Coffee size={14}/> Extras Total
-                <span style={{ fontSize:11 }}>({student.extras.length} items)</span>
+                <span style={{ fontSize:11 }}>({student.extras?.length || 0} items)</span>
               </div>
-              <div style={{ fontWeight:800, fontSize:14 }}>₹{student.totalExtras.toLocaleString("en-IN")}</div>
+              <div style={{ fontWeight:800, fontSize:14 }}>₹{student.total_extras?.toLocaleString("en-IN") || 0}</div>
             </div>
+            {student.rebate_refund > 0 && (
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 16px", background:"#dcfce7", borderRadius:T.radiusSm }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, color:"#22c55e" }}>
+                  <Icons.CheckCircle size={14}/> Rebate Refund
+                  <span style={{ fontSize:11 }}>({student.rebate_days}d × ₹{student.daily_refund_rate})</span>
+                </div>
+                <div style={{ fontWeight:800, fontSize:14, color:"#22c55e" }}>−₹{student.rebate_refund?.toLocaleString("en-IN") || 0}</div>
+              </div>
+            )}
             {/* Grand total */}
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 16px", background:T.accentL, borderRadius:T.radiusSm, border:`1.5px solid ${T.accent}22` }}>
               <div style={{ fontSize:14, fontWeight:700, color:T.accent }}>Grand Total</div>
-              <div style={{ fontSize:20, fontWeight:800, color:T.accent }}>₹{student.grand.toLocaleString("en-IN")}</div>
+              <div style={{ fontSize:20, fontWeight:800, color:T.accent }}>₹{student.grand_total?.toLocaleString("en-IN") || 0}</div>
             </div>
           </div>
         </div>
 
         {/* Extras table */}
-        {student.extras.length > 0 && (
+        {student.extras?.length > 0 && (
           <div style={{ marginBottom:20 }}>
             <div style={{ fontSize:11, fontWeight:700, color:T.muted, letterSpacing:".1em", textTransform:"uppercase", marginBottom:12 }}>Extras Transaction History</div>
             <div style={{ background:T.surface2, border:`1px solid ${T.border}`, borderRadius:T.radiusSm, overflow:"hidden" }}>
@@ -248,9 +207,9 @@ function BillModal({ student, onClose, onUpdateStatus }) {
                   {student.extras.map((e,i)=>(
                     <tr key={i} style={{ borderTop:`1px solid ${T.border}` }}>
                       <td style={{ padding:"10px 14px", fontSize:13, color:T.muted, fontWeight:600 }}>{e.date}</td>
-                      <td style={{ padding:"10px 14px", fontSize:13, fontWeight:700 }}>{e.item}</td>
+                      <td style={{ padding:"10px 14px", fontSize:13, fontWeight:700 }}>{e.item_name}</td>
                       <td style={{ padding:"10px 14px" }}><span style={{ fontSize:11, fontWeight:700, background:T.accentL, color:T.accent, padding:"2px 8px", borderRadius:5 }}>{e.hall}</span></td>
-                      <td style={{ padding:"10px 14px", fontSize:13, fontWeight:800, textAlign:"right" }}>₹{e.price}</td>
+                      <td style={{ padding:"10px 14px", fontSize:13, fontWeight:800, textAlign:"right" }}>₹{e.total_cost}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -268,18 +227,20 @@ function BillModal({ student, onClose, onUpdateStatus }) {
 
         {/* Actions */}
         <div style={{ display:"flex", gap:10 }}>
-          {student.payStatus !== "Paid" && <MoBtn color="#22c55e" onClick={()=>{ onUpdateStatus(student.id,"Paid"); onClose(); }}>
-            <Icons.Check size={15}/> Mark as Paid
-          </MoBtn>}
-          {student.payStatus !== "Waived" && <MoBtn color={T.accent} onClick={()=>{ onUpdateStatus(student.id,"Waived"); onClose(); }}>
-            <Icons.CheckCircle2 size={15}/> Waive Bill
-          </MoBtn>}
-          {student.payStatus === "Unpaid" && <MoBtn color="#f59e0b" onClick={()=>{ onUpdateStatus(student.id,"Overdue"); onClose(); }}>
-            <Icons.AlertCircle size={15}/> Mark Overdue
-          </MoBtn>}
-          <MoBtn color="#475569" onClick={()=>onClose()}>
+          <MoBtn color={T.accent} onClick={async () => {
+            await onSendReminder(student.id, note);
+            onClose();
+          }}>
             <Icons.Send size={15}/> Send Reminder
           </MoBtn>
+          {student.payStatus !== "Paid" && (
+            <MoBtn color="#22c55e" onClick={async () => {
+              await onUpdateStatus(student.id, 'paid', note);
+              onClose();
+            }}>
+              <Icons.Check size={15}/> Mark as Paid
+            </MoBtn>
+          )}
         </div>
       </div>
     </div>
@@ -297,27 +258,83 @@ function Toast({ msg, show }) {
 
 // ── Main ───────────────────────────────────────────────────────────────────
 export default function AdminBillingPage() {
-  const [students, setStudents] = useState(seed);
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch]       = useState("");
   const [statusF, setStatusF]     = useState("");
   const [hallF, setHallF]         = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return MONTHS[now.getMonth()];
+  });
   const [page, setPage]           = useState(1);
   const [activeId, setActiveId]   = useState(null);
   const [toast, setToast]         = useState({ show:false, msg:"" });
+  const [profile, setProfile]     = useState(null);
+  const [notifications, setNotifications] = useState([]);
   const PER = 8;
+
+  // Fetch admin profile + notifications
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profileRes = await api.get('/api/profile/');
+        setProfile(profileRes.data);
+        const notifRes = await api.get('/api/notifications/');
+        setNotifications(notifRes.data?.results || notifRes.data || []);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  // Fetch billing data when month changes
+  useEffect(() => {
+    const fetchBillingData = async () => {
+      setLoading(true);
+      try {
+        const params = selectedMonth ? { month: selectedMonth } : {};
+        const res = await api.get('/api/admin/billing/', { params });
+        // Map backend data to local format with payStatus defaulting to "Unpaid"
+        const mapped = (res.data || []).map(s => ({
+          ...s,
+          payStatus: s.payStatus || "Unpaid",
+        }));
+        setStudents(mapped);
+      } catch (err) {
+        console.error("Error fetching billing data:", err);
+        setStudents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBillingData();
+  }, [selectedMonth]);
+
+  const handleOpenNotifications = async () => {
+    const hasUnseen = notifications.some(n => n.category === 'unseen');
+    if (!hasUnseen) return;
+    setNotifications(prev => prev.map(n => ({ ...n, category: 'seen' })));
+    try {
+      await api.post('/api/notifications/mark-seen/');
+    } catch (error) {
+      console.error('Failed to mark notifications as seen:', error);
+    }
+  };
 
   const stats = useMemo(()=>({
     unpaid:  students.filter(s=>s.payStatus==="Unpaid").length,
     paid:    students.filter(s=>s.payStatus==="Paid").length,
     overdue: students.filter(s=>s.payStatus==="Overdue").length,
-    total:   students.filter(s=>s.payStatus==="Paid").reduce((a,s)=>a+s.grand,0),
-    outstanding: students.filter(s=>["Unpaid","Overdue"].includes(s.payStatus)).reduce((a,s)=>a+s.grand,0),
+    total:   students.filter(s=>s.payStatus==="Paid").reduce((a,s)=>a+(s.grand_total||0),0),
+    outstanding: students.filter(s=>["Unpaid","Overdue"].includes(s.payStatus)).reduce((a,s)=>a+(s.grand_total||0),0),
   }),[students]);
 
   const filtered = useMemo(()=>{
     const q=search.toLowerCase();
     return students.filter(s=>
-      (!q || s.name.toLowerCase().includes(q) || s.roll.includes(q)) &&
+      (!q || s.name?.toLowerCase().includes(q) || s.roll_no?.includes(q)) &&
       (!statusF || s.payStatus===statusF) &&
       (!hallF   || s.hall===hallF)
     );
@@ -330,98 +347,58 @@ export default function AdminBillingPage() {
 
   const showToast = msg => { setToast({show:true,msg}); setTimeout(()=>setToast({show:false,msg:""}),2800); };
 
-  const quickMark = (id, status) => {
-    const s = students.find(x=>x.id===id);
-    setStudents(prev=>prev.map(x=>x.id===id?{...x,payStatus:status, paidOn:status==="Paid"?"2026-03-"+Math.floor(Math.random()*10+20):""}:x));
-    showToast(`${s?.name} marked as ${status}`);
+  const handleMarkAs = async (id, newStatus, note = "") => {
+    try {
+      const res = await api.post('/api/admin/billing/update-status/', {
+        user_id: id,
+        month: selectedMonth,
+        status: newStatus,
+        note: note
+      });
+      // Update local state
+      setStudents(prev=>prev.map(x=>x.id===id?{...x, payStatus: res.data.payStatus, paid_on: res.data.paid_on}:x));
+      const s = students.find(x=>x.id===id);
+      showToast(`${s?.name} marked as ${newStatus}`);
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      showToast('Failed to update status');
+    }
   };
 
-  const halls = [...new Set(students.map(s=>s.hall))].sort();
-
-  // ── CSV Export ──────────────────────────────────────────────────────────
-  const [csvDropOpen, setCsvDropOpen] = useState(false);
-
-  const exportCSV = (scope) => {
-    setCsvDropOpen(false);
-    let rows;
-    if      (scope === "filtered") rows = filtered;
-    else if (scope === "unpaid")   rows = students.filter(s => s.payStatus === "Unpaid");
-    else if (scope === "overdue")  rows = students.filter(s => s.payStatus === "Overdue");
-    else                           rows = students;
-
-    const headers = [
-      "S.No","Student Name","Roll No","Hall","Total Days","Mess Closure Days","Rebate Days",
-      "Billable Days","Daily Rate (Rs)","Basic Bill (Rs)","Extras (Rs)","Grand Total (Rs)",
-      "Payment Status","Paid On","Extras Items"
-    ];
-    const escape = v => `"${String(v).replace(/"/g,'""')}"`;
-    const csvRows = rows.map((s, i) => [
-      i + 1,
-      escape(s.name),
-      s.roll,
-      s.hall,
-      TOTAL_DAYS,
-      CLOSURE,
-      s.rebateDays,
-      s.billable,
-      DAILY_RATE,
-      s.basic,
-      s.totalExtras,
-      s.grand,
-      s.payStatus,
-      s.paidOn || "-",
-      escape(s.extras.map(e => `${e.item} (Rs${e.price})`).join("; ") || "None"),
-    ].join(","));
-
-    const csv  = [headers.join(","), ...csvRows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url  = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href     = url;
-    link.download = `CMMS_Billing_${BILL_MONTH.replace(" ","_")}_${scope}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-    showToast(`CSV exported — ${rows.length} student${rows.length !== 1 ? "s" : ""}`);
+  const handleSendReminder = async (id, note = "") => {
+    try {
+      const res = await api.post('/api/admin/billing/send-reminder/', {
+        user_id: id,
+        month: selectedMonth,
+        note: note
+      });
+      showToast(res.data.message || 'Reminder sent!');
+    } catch (err) {
+      console.error('Failed to send reminder:', err);
+      showToast('Failed to send reminder');
+    }
   };
+
+  const halls = [...new Set(students.map(s=>s.hall).filter(Boolean))].sort();
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-        *{box-sizing:border-box;margin:0;padding:0;}
-        body{font-family:'Manrope',sans-serif;}
+        .admin-billing-page{font-family:'Manrope',sans-serif;}
         @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
-        tbody tr:hover td{background:#f7f7fd;}
-        input:focus,select:focus,textarea:focus{border-color:#5b5ef4!important;}
+        .admin-billing-page tbody tr:hover td{background:#f7f7fd;}
+        .admin-billing-page input:focus,.admin-billing-page select:focus,.admin-billing-page textarea:focus{border-color:#5b5ef4!important;}
         ::-webkit-scrollbar{width:6px;height:6px}
         ::-webkit-scrollbar-track{background:#f0f1fb}
         ::-webkit-scrollbar-thumb{background:#c7c8ee;border-radius:99px}
+        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
       `}</style>
 
-      <div style={{ fontFamily:"'Manrope',sans-serif", background:T.bg, minHeight:"100vh", color:T.text }}>
+      <div className="admin-billing-page" style={{ fontFamily:"'Manrope',sans-serif", background:T.bg, minHeight:"100vh", color:T.text }}>
 
-        {/* NAV */}
-        <nav style={{ background:T.surface, borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", padding:"0 28px", height:64, gap:14, position:"sticky", top:0, zIndex:100 }}>
-          <div style={{ cursor:"pointer", color:T.muted, display:"flex", alignItems:"center" }}><Icons.Menu size={20}/></div>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:38, height:38, background:T.accent, borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff" }}>
-              <Icons.Utensils size={19}/>
-            </div>
-            <div>
-              <div style={{ fontWeight:800, fontSize:17, lineHeight:1.1 }}>CMMS</div>
-              <div style={{ fontSize:10, letterSpacing:".12em", color:T.muted, fontWeight:600, textTransform:"uppercase" }}>Centralized Mess Management</div>
-            </div>
-          </div>
-          <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:16 }}>
-            <div style={{ position:"relative", cursor:"pointer", display:"flex", alignItems:"center", color:T.muted }}>
-              <Icons.Bell size={20}/>
-              <div style={{ position:"absolute", top:0, right:0, width:8, height:8, background:"#ef4444", borderRadius:"50%", border:"2px solid #fff" }}/>
-            </div>
-            <div style={{ width:36, height:36, borderRadius:"50%", background:T.surface2, display:"flex", alignItems:"center", justifyContent:"center", color:T.muted, cursor:"pointer", border:`2px solid ${T.border}` }}>
-              <Icons.User size={18}/>
-            </div>
-          </div>
-        </nav>
+        {/* AdminNavBar */}
+        <AdminNavBar profile={profile} notifications={notifications} onOpenNotifications={handleOpenNotifications} />
 
         <main style={{ padding:"32px 40px", maxWidth:1320, margin:"0 auto" }}>
 
@@ -433,7 +410,7 @@ export default function AdminBillingPage() {
             <div>
               <h1 style={{ fontSize:24, fontWeight:800 }}>Billing Management</h1>
               <p style={{ color:T.muted, fontSize:14, marginTop:2, fontWeight:500 }}>
-                {BILL_MONTH} mess bills · Payment due <strong style={{color:T.text}}>{DUE_DATE}</strong>
+                {selectedMonth} mess bills · Student billing overview
               </p>
             </div>
             {/* outstanding alert pill */}
@@ -448,7 +425,7 @@ export default function AdminBillingPage() {
             <StatCard label="Paid"      value={stats.paid}    iconBg="#dcfce7" iconColor="#22c55e" Ic={Icons.CheckCircle}  onClick={()=>{setStatusF("Paid");   setPage(1);}} />
             <StatCard label="Overdue"   value={stats.overdue} iconBg="#fee2e2" iconColor="#ef4444" Ic={Icons.AlertCircle}  onClick={()=>{setStatusF("Overdue");setPage(1);}} />
             <StatCard label="Total Collected" value={"₹"+stats.total.toLocaleString("en-IN")} sub={`${stats.paid} students`} iconBg="#dcfce7" iconColor="#22c55e" Ic={Icons.Wallet}  onClick={()=>{setStatusF("Paid");setPage(1);}} />
-            <StatCard label="All Students"    value={students.length} sub={BILL_MONTH} iconBg={T.accentL} iconColor={T.accent} Ic={Icons.Users} onClick={()=>{setStatusF("");setPage(1);}} />
+            <StatCard label="All Students"    value={students.length} sub={selectedMonth} iconBg={T.accentL} iconColor={T.accent} Ic={Icons.Users} onClick={()=>{setStatusF("");setPage(1);}} />
           </div>
 
           {/* Toolbar */}
@@ -468,115 +445,94 @@ export default function AdminBillingPage() {
               <option value="">All Halls</option>
               {halls.map(h=><option key={h}>{h}</option>)}
             </select>
+            <select style={sel} value={selectedMonth} onChange={e=>{setSelectedMonth(e.target.value);setPage(1);}}>
+              {MONTHS.map(m=><option key={m}>{m}</option>)}
+            </select>
 
-            {/* ── CSV Export Button + Dropdown ── */}
+            {/* CSV Export Button (placeholder — not implemented yet) */}
             <div style={{ position:"relative" }}>
               <button
-                onClick={()=>setCsvDropOpen(o=>!o)}
+                onClick={()=>showToast("CSV export coming soon!")}
                 style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 18px", background:T.accent, color:"#fff", border:"none", borderRadius:T.radiusSm, fontFamily:"inherit", fontSize:13, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap", boxShadow:"0 2px 8px rgba(91,94,244,.25)", transition:"opacity .15s" }}
                 onMouseEnter={e=>e.currentTarget.style.opacity=".88"}
                 onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
                 <Icons.FileSpreadsheet size={16}/> Export CSV
                 <Icons.ChevronDown size={14}/>
               </button>
-
-              {csvDropOpen && (
-                <>
-                  {/* backdrop */}
-                  <div style={{ position:"fixed", inset:0, zIndex:49 }} onClick={()=>setCsvDropOpen(false)}/>
-                  <div style={{ position:"absolute", right:0, top:"calc(100% + 8px)", background:T.surface, border:`1.5px solid ${T.border}`, borderRadius:T.radiusSm, boxShadow:T.shadowMd, zIndex:50, minWidth:220, overflow:"hidden", animation:"slideUp .15s ease" }}>
-                    {[
-                      { scope:"all",      label:"All Students",         sub:`${students.length} records`, icon:"#5b5ef4" },
-                      { scope:"filtered", label:"Current View",         sub:`${filtered.length} records (with filters)`, icon:"#3b82f6" },
-                      { scope:"unpaid",   label:"Unpaid Only",          sub:`${students.filter(s=>s.payStatus==="Unpaid").length} records`, icon:"#f59e0b" },
-                      { scope:"overdue",  label:"Overdue Only",         sub:`${students.filter(s=>s.payStatus==="Overdue").length} records`, icon:"#ef4444" },
-                    ].map(({ scope, label, sub, icon }) => (
-                      <button key={scope} onClick={()=>exportCSV(scope)}
-                        style={{ width:"100%", display:"flex", alignItems:"center", gap:12, padding:"12px 16px", background:"none", border:"none", borderBottom:`1px solid ${T.border}`, cursor:"pointer", fontFamily:"inherit", textAlign:"left", transition:"background .12s" }}
-                        onMouseEnter={e=>e.currentTarget.style.background=T.surface2}
-                        onMouseLeave={e=>e.currentTarget.style.background="none"}>
-                        <div style={{ width:32, height:32, borderRadius:8, background:icon+"18", color:icon, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                          <Icons.Download size={14}/>
-                        </div>
-                        <div>
-                          <div style={{ fontSize:13, fontWeight:700, color:T.text }}>{label}</div>
-                          <div style={{ fontSize:11, color:T.muted, marginTop:1 }}>{sub}</div>
-                        </div>
-                      </button>
-                    ))}
-                    <div style={{ padding:"10px 16px", background:T.surface2 }}>
-                      <div style={{ fontSize:11, color:T.muted, fontWeight:500 }}>
-                        Exports: Name, Roll, Hall, Billing breakdown, Extras detail
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
           </div>
 
           {/* Table */}
           <div style={{ background:T.surface, borderRadius:T.radius, boxShadow:T.shadow, overflow:"hidden" }}>
-            <table style={{ width:"100%", borderCollapse:"collapse" }}>
-              <thead style={{ background:T.surface2 }}>
-                <tr>
-                  {["#","Student","Hall","Billable Days","Basic Bill","Extras","Grand Total","Status","Paid On","Actions"].map(h=>(
-                    <th key={h} style={{ padding:"14px 18px", textAlign:"left", fontSize:11, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".1em", borderBottom:`1.5px solid ${T.border}` }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {slice.length===0 ? (
-                  <tr><td colSpan={10} style={{ textAlign:"center", padding:"60px 20px", color:T.muted, fontWeight:600 }}>
-                    <div style={{ display:"flex", justifyContent:"center", marginBottom:12, color:T.border }}><Icons.Inbox size={48}/></div>
-                    No billing records match your filters.
-                  </td></tr>
-                ) : slice.map((s,i)=>(
-                  <tr key={s.id}>
-                    <td style={{ padding:"16px 18px", fontSize:13, color:T.muted, fontWeight:700, borderBottom:`1px solid ${T.border}` }}>{(safePg-1)*PER+i+1}</td>
-                    <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                        <div style={{ width:34, height:34, borderRadius:10, background:T.accentL, color:T.accent, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, flexShrink:0 }}>{s.name[0]}</div>
-                        <div>
-                          <div style={{ fontWeight:700, fontSize:14 }}>{s.name}</div>
-                          <div style={{ fontSize:12, color:T.muted, marginTop:1 }}>{s.roll}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
-                      <span style={{ fontSize:12, fontWeight:700, background:T.accentL, color:T.accent, padding:"4px 10px", borderRadius:6, letterSpacing:".06em" }}>{s.hall}</span>
-                    </td>
-                    <td style={{ padding:"16px 18px", fontSize:14, fontWeight:700, borderBottom:`1px solid ${T.border}` }}>
-                      <div>{s.billable} days</div>
-                      <div style={{ fontSize:11, color:T.muted, marginTop:1 }}>{TOTAL_DAYS}−{CLOSURE}−{s.rebateDays}d</div>
-                    </td>
-                    <td style={{ padding:"16px 18px", fontSize:14, fontWeight:700, borderBottom:`1px solid ${T.border}` }}>₹{s.basic.toLocaleString("en-IN")}</td>
-                    <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
-                      {s.totalExtras > 0
-                        ? <><div style={{ fontSize:14, fontWeight:700 }}>₹{s.totalExtras}</div><div style={{ fontSize:11, color:T.muted }}>{s.extras.length} item{s.extras.length>1?"s":""}</div></>
-                        : <span style={{ fontSize:12, color:T.muted }}>—</span>}
-                    </td>
-                    <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
-                      <div style={{ fontSize:15, fontWeight:800, color:T.text }}>₹{s.grand.toLocaleString("en-IN")}</div>
-                    </td>
-                    <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}><StatusBadge status={s.payStatus}/></td>
-                    <td style={{ padding:"16px 18px", fontSize:13, color:T.muted, fontWeight:600, borderBottom:`1px solid ${T.border}` }}>
-                      {s.paidOn || <span style={{ color:"#e5e6f7" }}>—</span>}
-                    </td>
-                    <td style={{ padding:"16px 18px", borderBottom: i===slice.length-1?"none":`1px solid ${T.border}` }}>
-                      <div style={{ display:"flex", gap:6 }}>
-                        <AiBtn color={T.accent}   hoverBg={T.accent}   title="View full bill"  onClick={()=>setActiveId(s.id)}><Icons.Eye size={15}/></AiBtn>
-                        {s.payStatus!=="Paid"   && <AiBtn color="#22c55e" hoverBg="#22c55e" title="Mark Paid"    onClick={()=>quickMark(s.id,"Paid")}><Icons.Check size={15}/></AiBtn>}
-                        {s.payStatus!=="Overdue"&& s.payStatus!=="Paid" && s.payStatus!=="Waived" && <AiBtn color="#f59e0b" hoverBg="#f59e0b" title="Mark Overdue" onClick={()=>quickMark(s.id,"Overdue")}><Icons.AlertCircle size={15}/></AiBtn>}
-                        <AiBtn color="#475569"  hoverBg="#475569"  title="Send Reminder" onClick={()=>showToast(`Reminder sent to ${s.name}`)}><Icons.Send size={15}/></AiBtn>
-                      </div>
-                    </td>
+            {loading ? (
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"80px 20px", gap:12 }}>
+                <Icons.Loader size={32} style={{ color:T.accent, animation:"spin 1s linear infinite" }}/>
+                <div style={{ fontSize:14, color:T.muted, fontWeight:600 }}>Loading billing data…</div>
+              </div>
+            ) : (
+              <table style={{ width:"100%", borderCollapse:"collapse" }}>
+                <thead style={{ background:T.surface2 }}>
+                  <tr>
+                    {["#","Student","Hall","Rebate Days","Fixed Charges","Extras","Grand Total","Status","Actions"].map(h=>(
+                      <th key={h} style={{ padding:"14px 18px", textAlign:"left", fontSize:11, fontWeight:700, color:T.muted, textTransform:"uppercase", letterSpacing:".1em", borderBottom:`1.5px solid ${T.border}` }}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {slice.length===0 ? (
+                    <tr><td colSpan={9} style={{ textAlign:"center", padding:"60px 20px", color:T.muted, fontWeight:600 }}>
+                      <div style={{ display:"flex", justifyContent:"center", marginBottom:12, color:T.border }}><Icons.Inbox size={48}/></div>
+                      No billing records match your filters.
+                    </td></tr>
+                  ) : slice.map((s,i)=>(
+                    <tr key={s.id}>
+                      <td style={{ padding:"16px 18px", fontSize:13, color:T.muted, fontWeight:700, borderBottom:`1px solid ${T.border}` }}>{(safePg-1)*PER+i+1}</td>
+                      <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                          <div style={{ width:34, height:34, borderRadius:10, background:T.accentL, color:T.accent, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, flexShrink:0 }}>{s.name?.[0] || "?"}</div>
+                          <div>
+                            <div style={{ fontWeight:700, fontSize:14 }}>{s.name}</div>
+                            <div style={{ fontSize:12, color:T.muted, marginTop:1 }}>{s.roll_no}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
+                        <span style={{ fontSize:12, fontWeight:700, background:T.accentL, color:T.accent, padding:"4px 10px", borderRadius:6, letterSpacing:".06em" }}>{s.hall}</span>
+                      </td>
+                      <td style={{ padding:"16px 18px", fontSize:14, fontWeight:700, borderBottom:`1px solid ${T.border}` }}>
+                        {s.rebate_days > 0 ? (
+                          <><div style={{ color:"#22c55e" }}>{s.rebate_days} days</div>
+                          <div style={{ fontSize:11, color:T.muted, marginTop:1 }}>−₹{s.rebate_refund?.toLocaleString("en-IN")}</div></>
+                        ) : <span style={{ fontSize:12, color:T.muted }}>—</span>}
+                      </td>
+                      <td style={{ padding:"16px 18px", fontSize:14, fontWeight:700, borderBottom:`1px solid ${T.border}` }}>₹{s.fixed_charges?.toLocaleString("en-IN") || 0}</td>
+                      <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
+                        {s.total_extras > 0
+                          ? <><div style={{ fontSize:14, fontWeight:700 }}>₹{s.total_extras?.toLocaleString("en-IN")}</div><div style={{ fontSize:11, color:T.muted }}>{s.extras?.length} item{s.extras?.length>1?"s":""}</div></>
+                          : <span style={{ fontSize:12, color:T.muted }}>—</span>}
+                      </td>
+                      <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
+                        <div style={{ fontSize:15, fontWeight:800, color:T.text }}>₹{s.grand_total?.toLocaleString("en-IN") || 0}</div>
+                      </td>
+                      <td style={{ padding:"16px 18px", borderBottom:`1px solid ${T.border}` }}>
+                        <StatusBadge status={s.payStatus} />
+                      </td>
+                      <td style={{ padding:"16px 18px", borderBottom: i===slice.length-1?"none":`1px solid ${T.border}` }}>
+                        <div style={{ display:"flex", gap:6 }}>
+                          <AiBtn color={T.accent}   hoverBg={T.accent}   title="View full bill"  onClick={()=>setActiveId(s.id)}><Icons.Eye size={15}/></AiBtn>
+                          <AiBtn color="#475569"  hoverBg="#475569"  title="Send Reminder" onClick={()=>handleSendReminder(s.id)}><Icons.Send size={15}/></AiBtn>
+                          {s.payStatus !== "Paid" && (
+                            <AiBtn color="#22c55e"  hoverBg="#22c55e"  title="Mark as Paid" onClick={()=>handleMarkAs(s.id, 'paid')}><Icons.Check size={15}/></AiBtn>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
 
-            {pages>1 && (
+            {!loading && pages>1 && (
               <div style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", gap:8, padding:"16px 18px", borderTop:`1px solid ${T.border}` }}>
                 <span style={{ fontSize:13, color:T.muted, fontWeight:600, marginRight:4 }}>Page {safePg} of {pages}</span>
                 <PgBtn disabled={safePg===1}     onClick={()=>setPage(p=>p-1)}>‹</PgBtn>
@@ -588,7 +544,10 @@ export default function AdminBillingPage() {
         </main>
 
         {activeId && active && (
-          <BillModal student={active} onClose={()=>setActiveId(null)} onUpdateStatus={(id,st)=>{ quickMark(id,st); }} />
+          <BillModal student={active} selectedMonth={selectedMonth} onClose={()=>setActiveId(null)} 
+            onUpdateStatus={handleMarkAs} 
+            onSendReminder={handleSendReminder}
+          />
         )}
         <Toast show={toast.show} msg={toast.msg}/>
       </div>

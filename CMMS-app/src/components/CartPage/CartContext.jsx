@@ -40,9 +40,12 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Initial sync
+    // Initial sync - skip on public routes to avoid unnecessary 401s
     useEffect(() => {
-        fetchCartSync();
+        const publicPaths = ['/login', '/home', '/'];
+        if (!publicPaths.includes(window.location.pathname)) {
+            fetchCartSync();
+        }
     }, []);
 
     const addToCart = async (item) => {

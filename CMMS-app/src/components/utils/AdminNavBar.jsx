@@ -1,18 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Bell, User, Utensils, LogOut, X, ChevronDown, Phone, Hash, Home, Building, Menu, SquarePen, CalendarClock, Sparkles, Star } from 'lucide-react';
-import { useCart } from '../CartPage/CartContext';
+import { Bell, User, Utensils, LogOut, X, Phone, Home, Building, Menu, ReceiptText, Sparkles, Star, CalendarClock, ShoppingBag } from 'lucide-react';
 import api from '../../Api';
 
-export default function NavBar({ profile, notifications: propNotifs, onOpenNotifications, navLinks }) {
+export default function AdminNavBar({ profile, notifications: propNotifs, onOpenNotifications }) {
     const [showProfile, setShowProfile] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [localNotifs, setLocalNotifs] = useState([]);
     const navigate = useNavigate();
-
-    const { cartCount } = useCart();
 
     const profileRef = useRef(null);
     const notifRef = useRef(null);
@@ -41,6 +38,24 @@ export default function NavBar({ profile, notifications: propNotifs, onOpenNotif
         fetchNotifications();
     }, []);
 
+    const handleLogout = async () => {
+        try {
+            await api.post('/api/logout/');
+        } catch (err) {
+            console.error("Logout failed:", err);
+        }
+        window.location.href = '/login';
+    };
+
+    const adminMenuLinks = [
+        { name: "Dashboard", path: "/admin-dashboard", icon: Home },
+        { name: "Billing Management", path: "/admin-billing", icon: ReceiptText },
+        { name: "Extras Management", path: "/admin-extra-management", icon: ShoppingBag },
+        { name: "Feedback", path: "/admin-feedback", icon: Star },
+        { name: "Rebate Management", path: "/admin-rebate", icon: CalendarClock },
+        { name: "Menu Management", path: "/admin-menu-management", icon: Sparkles },
+    ];
+
     return (
         <motion.nav
             initial={{ y: -20, opacity: 0 }}
@@ -67,31 +82,28 @@ export default function NavBar({ profile, notifications: propNotifs, onOpenNotif
                                 exit={{ opacity: 0, x: -10 }}
                                 className="absolute left-0 top-full mt-4 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50 py-2"
                             >
-                                <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <SquarePen className="w-5 h-5" /> Rebate
-                                </button>
-                                <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <CalendarClock className="w-5 h-5" /> Mess menu
-                                </button>
-                                <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <Sparkles className="w-5 h-5" /> Complaints
-                                </button>
-                                <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <Star className="w-5 h-5" /> Feedback
-                                </button>
+                                {adminMenuLinks.map((link) => (
+                                    <button
+                                        key={link.path}
+                                        onClick={() => { navigate(link.path); setShowMenu(false); }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                    >
+                                        <link.icon className="w-5 h-5" /> {link.name}
+                                    </button>
+                                ))}
                             </motion.div>
                         )}
                     </AnimatePresence>
                 </div>
 
-                <div className="flex items-center gap-3 cursor-pointer">
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/admin-dashboard')}>
                     <div className="bg-indigo-600 p-2.5 rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/20">
                         <Utensils className="w-5 h-5 text-white" strokeWidth={2.5} />
                     </div>
                     <div className="flex flex-col">
                         <span className="font-extrabold text-xl leading-tight tracking-tight text-slate-900">CMMS</span>
                         <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
-                            Centralized Mess Management
+                            Admin Panel
                         </span>
                     </div>
                 </div>
@@ -99,17 +111,6 @@ export default function NavBar({ profile, notifications: propNotifs, onOpenNotif
 
             {/* Right Actions */}
             <div className="flex items-center gap-6 ml-auto">
-                <button
-                    onClick={() => navigate('/cart')}
-                    className="relative p-2.5 rounded-full text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                >
-                    <ShoppingCart className="w-5 h-5" strokeWidth={1.5} />
-                    {cartCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
-                            {cartCount}
-                        </span>
-                    )}
-                </button>
 
                 {/* Notifications */}
                 <div className="relative flex items-center" ref={notifRef}>
@@ -214,8 +215,8 @@ export default function NavBar({ profile, notifications: propNotifs, onOpenNotif
                                     <p className="text-sm text-slate-500 font-medium">{profile.email}</p>
 
                                     <div className="mt-4 flex items-center justify-center gap-2">
-                                        <div className="px-3 py-1 bg-indigo-100/80 text-indigo-700 text-[10px] font-bold rounded-full uppercase tracking-widest border border-indigo-200/50 shadow-sm">
-                                            {profile.role || 'Guest'}
+                                        <div className="px-3 py-1 bg-amber-100/80 text-amber-700 text-[10px] font-bold rounded-full uppercase tracking-widest border border-amber-200/50 shadow-sm">
+                                            Admin
                                         </div>
                                         <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-100 rounded-full">
                                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
@@ -234,50 +235,11 @@ export default function NavBar({ profile, notifications: propNotifs, onOpenNotif
                                             </div>
                                         </div>
                                     )}
-
-                                    {profile.role === 'student' && (
-                                        <>
-                                            {profile.roll_no && (
-                                                <div className="py-2.5 px-2 flex items-center gap-3">
-                                                    <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center"><Hash className="w-3.5 h-3.5 text-slate-400" /></div>
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Roll Number</p>
-                                                        <p className="text-sm font-semibold text-slate-700">{profile.roll_no}</p>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {profile.hall_of_residence && (
-                                                <div className="py-2.5 px-2 flex items-center gap-3">
-                                                    <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center"><Building className="w-3.5 h-3.5 text-slate-400" /></div>
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Hall of Residence</p>
-                                                        <p className="text-sm font-semibold text-slate-700">
-                                                            {typeof profile.hall_of_residence === 'object' ? profile.hall_of_residence.name : profile.hall_of_residence}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {profile.room_no && (
-                                                <div className="py-2.5 px-2 flex items-center gap-3">
-                                                    <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center"><Home className="w-3.5 h-3.5 text-slate-400" /></div>
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Room Number</p>
-                                                        <p className="text-sm font-semibold text-slate-700">{profile.room_no}</p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
                                 </div>
 
                                 <div className="p-3 bg-slate-50 border-t border-slate-100">
-                                    <button 
-                                        onClick={async () => {
-                                            try { await api.post('/api/logout/'); } catch(e){}
-                                            window.location.href = '/login';
-                                        }}
+                                    <button
+                                        onClick={handleLogout}
                                         className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-colors"
                                     >
                                         <LogOut className="w-4 h-4" strokeWidth={2.5} /> Logout

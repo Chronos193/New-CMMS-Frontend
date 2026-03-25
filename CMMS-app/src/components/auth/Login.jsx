@@ -29,7 +29,13 @@ export default function Login({ setView, initialRole = 'student' }) {
             // Endpoint to hit the django backend
             const res = await api.post('/api/login/', formData);
             console.log('Login Success:', res.data);
-            navigate('/first');
+            // Route based on user role
+            const userRole = res.data.user?.role;
+            if (userRole === 'admin') {
+                navigate('/admin-dashboard');
+            } else {
+                navigate('/first');
+            }
         } catch (err) {
             console.error(err);
             setError(err.response?.data?.detail || err.response?.data?.message || 'Invalid credentials. Please try again.');

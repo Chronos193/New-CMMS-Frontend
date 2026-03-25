@@ -66,19 +66,24 @@ api.interceptors.response.use(
             }
 
             isRefreshing = true;
+            console.log("[API] Access token expired, attempting refresh...");
 
             try {
-                // Attempt refresh (cookie-based)
-                await api.post("/auth/refresh/");
+                // IMPORTANT: Use raw axios here to avoid interceptor recursion
+                await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh/`, {}, {
+                    withCredentials: true
+                });
 
+                console.log("[API] Refresh successful, retrying original request.");
                 processQueue();
                 return api(originalRequest);
 
             }
             catch (refreshError) {
+                console.error("[API] Refresh failed:", refreshError.response?.status);
                 processQueue(refreshError);
 
-                // Use raw axios to avoid interceptor logic during emergency logout
+                // Use raw axios for emergency logout
                 try {
                     const csrfToken = document.cookie
                         .split("; ")
@@ -90,9 +95,11 @@ api.interceptors.response.use(
                         headers: csrfToken ? { "X-CSRFToken": csrfToken } : {}
                     });
                 }
-                catch (_) { /* ignore */ }
+                catch (_) { /* ignore logout errors */ }
 
-                window.location.href = "/login";
+                if (window.location.pathname !== "/login") {
+                    window.location.href = "/login";
+                }
                 return Promise.reject(refreshError);
             }
             finally {
