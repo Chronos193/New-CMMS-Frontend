@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import NavBar from '../components/utils/NavBar';
 import { CalendarCheck, Utensils, ReceiptText, Wallet, MessageSquarePlus, Loader2 } from 'lucide-react';
 import api from '../Api';
+import { useNavigate } from 'react-router-dom'; // ADD THIS LINE
 
 export default function Dashboard() {
+    const navigate = useNavigate(); // ADD THIS LINE
     const [profile, setProfile] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [loadingProfile, setLoadingProfile] = useState(true);

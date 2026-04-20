@@ -7,7 +7,7 @@ import api from '../Api';
 
 const RebatePage = () => {
     const navigate = useNavigate();
-    
+
     // Profile & Notifications state for NavBar
     const [profile, setProfile] = useState(null);
     const [notifications, setNotifications] = useState([]);
@@ -18,6 +18,8 @@ const RebatePage = () => {
     const [endDate, setEndDate] = useState("");
     const [location, setLocation] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const todayLocal = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
     // Rebate Data
     const [rebates, setRebates] = useState([]);
@@ -82,7 +84,19 @@ const RebatePage = () => {
             alert("Please fill in all fields.");
             return;
         }
-        
+        if (endDate < startDate) {
+            alert("End date cannot be before start date.");
+            return;
+        }
+
+        const sDate = new Date(startDate);
+        const eDate = new Date(endDate);
+        const diffDays = Math.ceil((eDate - sDate) / (1000 * 60 * 60 * 24)) + 1;
+        if (diffDays < 3) {
+            alert("Rebate requests require a minimum of 3 consecutive days.");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const response = await api.post('/api/rebates/', {
@@ -104,9 +118,9 @@ const RebatePage = () => {
 
     const getStatusStyles = (status) => {
         const s = status?.toLowerCase();
-        switch(s) {
+        switch (s) {
             case 'approved': return 'bg-slate-900 text-white';
-            case 'pending': 
+            case 'pending':
             case 'processing': return 'bg-white text-slate-900 border border-slate-200';
             case 'rejected': return 'bg-rose-500 text-white';
             default: return 'bg-slate-100 text-slate-500';
@@ -115,7 +129,7 @@ const RebatePage = () => {
 
     const getStatusIcon = (status) => {
         const s = status?.toLowerCase();
-        switch(s) {
+        switch (s) {
             case 'approved': return <CheckCircle2 size={12} />;
             case 'pending':
             case 'processing': return <Clock size={12} />;
@@ -126,11 +140,11 @@ const RebatePage = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
-            <NavBar 
-                profile={profile} 
-                notifications={notifications} 
-                navLinks={navLinks} 
-                onOpenNotifications={handleOpenNotifications} 
+            <NavBar
+                profile={profile}
+                notifications={notifications}
+                navLinks={navLinks}
+                onOpenNotifications={handleOpenNotifications}
             />
 
             <main className="max-w-4xl mx-auto px-4 py-8 md:py-12">
@@ -140,7 +154,7 @@ const RebatePage = () => {
                         <p className="text-slate-500 font-medium animate-pulse">Loading rebate portal...</p>
                     </div>
                 ) : (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="space-y-8"
@@ -174,17 +188,25 @@ const RebatePage = () => {
                         <section className="bg-white border border-slate-100 rounded-2xl p-8 shadow-sm">
                             <h2 className="text-lg font-bold text-slate-800 mb-1">New Rebate Application</h2>
                             <p className="text-slate-500 text-sm font-medium mb-8">Select your mess leave dates to apply for a rebate</p>
-                            
+
                             <form onSubmit={handleApplyRebate} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Leave Start Date</label>
                                         <div className="relative group">
                                             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-indigo-500 transition-colors" size={18} />
-                                            <input 
-                                                type="date" 
+                                            <input
+                                                type="date"
                                                 value={startDate}
-                                                onChange={(e) => setStartDate(e.target.value)}
+                                                min={todayLocal}
+                                                onChange={(e) => {
+                                                    const newStart = e.target.value;
+                                                    setStartDate(newStart);
+                                                    // Reset end date if it's now before the new start date
+                                                    if (endDate && newStart > endDate) {
+                                                        setEndDate("");
+                                                    }
+                                                }}
                                                 className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all cursor-pointer"
                                                 required
                                             />
@@ -194,10 +216,11 @@ const RebatePage = () => {
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Leave End Date</label>
                                         <div className="relative group">
                                             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-indigo-500 transition-colors" size={18} />
-                                            <input 
-                                                type="date" 
+                                            <input
+                                                type="date"
                                                 value={endDate}
                                                 onChange={(e) => setEndDate(e.target.value)}
+                                                min={startDate || todayLocal}
                                                 className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all cursor-pointer"
                                                 required
                                             />
@@ -206,8 +229,8 @@ const RebatePage = () => {
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Location / Reason</label>
                                         <div className="relative group">
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 value={location}
                                                 onChange={(e) => setLocation(e.target.value)}
                                                 placeholder="Where will you be?"
@@ -218,7 +241,7 @@ const RebatePage = () => {
                                     </div>
                                 </div>
 
-                                <button 
+                                <button
                                     type="submit"
                                     className="px-8 py-3.5 bg-slate-700 hover:bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-slate-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
                                     disabled={!startDate || !endDate || !location || isSubmitting}
@@ -243,70 +266,71 @@ const RebatePage = () => {
                                         const eDate = new Date(item.end_date);
                                         const diffTime = eDate - sDate;
                                         const durationDays = diffTime >= 0 ? Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 : 0;
-                                        
+
                                         // Calculate amount using dynamic daily rates from the backend
                                         const monthName = sDate.toLocaleString('default', { month: 'long' });
-                                        
+
                                         // Try to find the rate for this specific month from our new API
                                         const monthlyRateObj = dailyRates.find(r => r.month?.toLowerCase() === monthName.toLowerCase());
-                                        const dailyRate = monthlyRateObj ? parseFloat(monthlyRateObj.cost) : 150; 
-                                        
+                                        const dailyRate = monthlyRateObj ? parseFloat(monthlyRateObj.cost) : 150;
+
                                         const amount = durationDays * dailyRate;
-                                        
+
                                         const displayId = `RBT-${item.id}`;
                                         const displayStatus = item.status || 'Processing';
-                                        
+
                                         return (
-                                        <motion.div 
-                                            key={item.id}
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: index * 0.05 }}
-                                            className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group"
-                                        >
-                                            <div className="flex flex-col md:flex-row justify-between gap-4">
-                                                <div className="space-y-4">
-                                                    {/* ID and Status */}
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="font-bold text-slate-800">{displayId}</span>
-                                                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyles(displayStatus)}`}>
-                                                            {getStatusIcon(displayStatus)}
-                                                            {displayStatus}
+                                            <motion.div
+                                                key={item.id}
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: index * 0.05 }}
+                                                className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group"
+                                            >
+                                                <div className="flex flex-col md:flex-row justify-between gap-4">
+                                                    <div className="space-y-4">
+                                                        {/* ID and Status */}
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="font-bold text-slate-800">{displayId}</span>
+                                                            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyles(displayStatus)}`}>
+                                                                {getStatusIcon(displayStatus)}
+                                                                {displayStatus}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Details Grid */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-2">
+                                                            <div className="flex gap-2">
+                                                                <span className="text-slate-400 font-bold text-xs uppercase tracking-tight min-w-[100px]">Leave Period:</span>
+                                                                <span className="text-sm font-semibold text-slate-700">{item.start_date} to {item.end_date}</span>
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <span className="text-slate-400 font-bold text-xs uppercase tracking-tight min-w-[100px]">Duration:</span>
+                                                                <span className="text-sm font-semibold text-slate-700">{durationDays} days</span>
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <span className="text-slate-400 font-bold text-xs uppercase tracking-tight min-w-[100px]">Submitted:</span>
+                                                                <span className="text-sm font-semibold text-slate-700">{new Date(item.created_at).toLocaleDateString()}</span>
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <span className="text-slate-400 font-bold text-xs uppercase tracking-tight min-w-[100px]">Location:</span>
+                                                                <span className="text-sm font-semibold text-slate-600">{item.location}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
 
-                                                    {/* Details Grid */}
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-2">
-                                                        <div className="flex gap-2">
-                                                            <span className="text-slate-400 font-bold text-xs uppercase tracking-tight min-w-[100px]">Leave Period:</span>
-                                                            <span className="text-sm font-semibold text-slate-700">{item.start_date} to {item.end_date}</span>
-                                                        </div>
-                                                        <div className="flex gap-2">
-                                                            <span className="text-slate-400 font-bold text-xs uppercase tracking-tight min-w-[100px]">Duration:</span>
-                                                            <span className="text-sm font-semibold text-slate-700">{durationDays} days</span>
-                                                        </div>
-                                                        <div className="flex gap-2">
-                                                            <span className="text-slate-400 font-bold text-xs uppercase tracking-tight min-w-[100px]">Submitted:</span>
-                                                            <span className="text-sm font-semibold text-slate-700">{new Date(item.created_at).toLocaleDateString()}</span>
-                                                        </div>
-                                                        <div className="flex gap-2">
-                                                            <span className="text-slate-400 font-bold text-xs uppercase tracking-tight min-w-[100px]">Location:</span>
-                                                            <span className="text-sm font-semibold text-slate-600">{item.location}</span>
-                                                        </div>
+                                                    {/* Amount */}
+                                                    <div className="flex flex-col md:text-right justify-center">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Amount</span>
+                                                        <span className="text-2xl font-black text-slate-900">₹{amount}</span>
                                                     </div>
                                                 </div>
 
-                                                {/* Amount */}
-                                                <div className="flex flex-col md:text-right justify-center">
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Amount</span>
-                                                    <span className="text-2xl font-black text-slate-900">₹{amount}</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Hover indicator */}
-                                            <div className="absolute left-0 top-0 h-full w-1 bg-indigo-600 transform scale-y-0 group-hover:scale-y-100 transition-transform origin-top" />
-                                        </motion.div>
-                                    )})}
+                                                {/* Hover indicator */}
+                                                <div className="absolute left-0 top-0 h-full w-1 bg-indigo-600 transform scale-y-0 group-hover:scale-y-100 transition-transform origin-top" />
+                                            </motion.div>
+                                        )
+                                    })}
                                 </AnimatePresence>
                             </div>
                         </section>

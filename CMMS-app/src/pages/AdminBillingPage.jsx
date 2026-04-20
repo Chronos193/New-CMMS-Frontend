@@ -317,6 +317,40 @@ export default function AdminBillingPage() {
 
   const showToast = msg => { setToast({show:true,msg}); setTimeout(()=>setToast({show:false,msg:""}),2800); };
 
+  const handleExportCSV = () => {
+    if (!filtered || filtered.length === 0) {
+      showToast("No data to export!");
+      return;
+    }
+    const headers = [
+      "Student Name", "Roll No", "Hall", "Rebate Days", "Rebate Refund", 
+      "Fixed Charges", "Extras", "Grand Total", "Status"
+    ];
+    const csvRows = [
+      headers.join(","),
+      ...filtered.map(s => [
+        `"${(s.name || '').replace(/"/g, '""')}"`,
+        `"${(s.roll_no || '').replace(/"/g, '""')}"`,
+        `"${(s.hall || '').replace(/"/g, '""')}"`,
+        s.rebate_days || 0,
+        s.rebate_refund || 0,
+        s.fixed_charges || 0,
+        s.total_extras || 0,
+        s.grand_total || 0,
+        `"${(s.payStatus || "Unpaid").replace(/"/g, '""')}"`
+      ].join(","))
+    ];
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Billing_Export_${selectedMonth || "All"}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleMarkAs = async (id, newStatus, note = "") => {
     try {
       const res = await api.post('/api/admin/billing/update-status/', {
@@ -401,9 +435,9 @@ export default function AdminBillingPage() {
             {MONTHS.map(m=><option key={m}>{m}</option>)}
           </select>
           <button
-            onClick={()=>showToast("CSV export coming soon!")}
+            onClick={handleExportCSV}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-500/20 hover:opacity-90 transition-opacity whitespace-nowrap">
-            <Icons.FileSpreadsheet size={16}/> Export CSV <Icons.ChevronDown size={14}/>
+            <Icons.FileSpreadsheet size={16}/> Export CSV
           </button>
         </div>
 

@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import AdminNavBar from '../components/utils/AdminNavBar';
 import { ReceiptText, ShoppingBag, Star, CalendarClock, Sparkles, Loader2, Bell, ScanLine } from 'lucide-react';
 import api from '../Api';
+import { useNavigate } from 'react-router-dom'; // <--- ADD THIS
 
 export default function AdminDashboard() {
+    const navigate = useNavigate(); // <--- ADD THIS
     const [profile, setProfile] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [loadingProfile, setLoadingProfile] = useState(true);

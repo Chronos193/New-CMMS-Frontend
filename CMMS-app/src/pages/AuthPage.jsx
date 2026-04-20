@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Utensils } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import Login from '../components/auth/Login';
 import Signup from '../components/auth/Signup';
 import ForgotPassword from '../components/auth/ForgotPassword';
@@ -36,7 +36,7 @@ export default function AuthPage() {
                 transition={{ duration: 0.5 }}
                 className="relative z-10 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 py-4 px-6 md:px-12 flex items-center justify-between shadow-sm"
             >
-                <div className="flex items-center gap-3">
+                <Link to="/" className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity">
                     <div className="bg-indigo-500 p-2 rounded-lg flex items-center justify-center shadow-sm">
                         <Utensils className="w-5 h-5 text-white" strokeWidth={2} />
                     </div>
@@ -44,7 +44,7 @@ export default function AuthPage() {
                         <h1 className="font-bold text-lg leading-tight tracking-tight text-slate-900">CMMS</h1>
                         <p className="text-xs text-slate-500 font-medium tracking-wide">Centralized Mess Management System</p>
                     </div>
-                </div>
+                </Link>
             </motion.nav>
 
             {/* Main Content - Split Layout for Homepage Feel */}
